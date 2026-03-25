@@ -118,7 +118,17 @@ class ImagePickerWidget extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.network(uploadedImageUrl!, fit: BoxFit.cover),
+        Image.network(
+          uploadedImageUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              size: 48,
+              color: Colors.grey.shade400,
+            ),
+          ),
+        ),
         _buildUploadedBadge(),
         _buildChangeOverlay(),
       ],

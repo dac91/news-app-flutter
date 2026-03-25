@@ -42,6 +42,28 @@ class SavedArticles extends HookWidget {
       builder: (context, state) {
         if (state is LocalArticlesLoading) {
           return const Center(child: CupertinoActivityIndicator());
+        } else if (state is LocalArticlesError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 12),
+                Text(
+                  state.error.message ?? 'Failed to load saved articles',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () => BlocProvider.of<LocalArticleBloc>(context)
+                      .add(const GetSavedArticles()),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
         } else if (state is LocalArticlesDone) {
           return _buildArticlesList(state.articles!);
         }

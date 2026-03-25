@@ -1,5 +1,24 @@
 const String newsAPIBaseURL = 'https://newsapi.org/v2';
-const String newsAPIKey = 'ff957763c54c44d8b00e5e082bc76cb0';
+
+/// API key injected at compile time via `--dart-define=NEWS_API_KEY=<key>`.
+///
+/// Never hardcode API keys in source code — they end up in version control
+/// and are trivially extractable from compiled binaries.
+///
+/// Usage:
+///   flutter run --dart-define=NEWS_API_KEY=your_key_here
+///   flutter build apk --dart-define=NEWS_API_KEY=your_key_here
+const String newsAPIKey = String.fromEnvironment(
+  'NEWS_API_KEY',
+  defaultValue: '',
+);
+
 const String countryQuery = 'us';
 const String categoryQuery = 'general';
-const String kDefaultImage = "https://www.google.com/search?q=default+image&client=firefox-b-d&sxsrf=APq-WBskmtr-ix6NUAqqiHFNpsJX6JSOTg:1650026644151&source=lnms&tbm=isch&sa=X&ved=2ahUKEwjEi_qfjJb3AhXvQd8KHd02BKUQ_AUoAXoECAEQAw#imgrc=A0pMe2lq2NT_jM";
+
+/// Fallback placeholder image when an article has no thumbnail.
+///
+/// Uses a lightweight placeholder service instead of a broken Google
+/// Images search URL (which returns HTML, not an image).
+const String kDefaultImage =
+    'https://placehold.co/600x400/e8e8e8/999999?text=No+Image';

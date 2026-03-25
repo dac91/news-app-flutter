@@ -58,7 +58,7 @@
 | N-003 | Firestore Schema Design | Full schema in `backend/docs/DB_SCHEMA.md` with field types and constraints | DONE | High |
 | N-004 | Firestore Schema Implementation | Firestore enabled (nam5 region), collections ready | DONE | High |
 | N-005 | Firestore Security Rules | Field presence, type, length validation, server timestamp enforcement deployed | DONE | High |
-| N-006 | Cloud Storage Rules | Rules written for `media/articles/` path (image/*, 5MB max) | DEFERRED | High |
+| N-006 | Cloud Storage Rules | Rules deployed for `media/articles/` path (image/*, 5MB max) | DONE | High |
 | N-007 | Firebase Emulator Configuration | Not yet configured | PENDING | Medium |
 
 ### 2.2 Frontend — Domain Layer
@@ -108,8 +108,8 @@
 
 | # | Improvement | Description | Status | Priority | File(s) |
 |---|------------|-------------|--------|----------|---------|
-| T-001 | Remove Hardcoded API Key | Move NewsAPI key to environment variables | PENDING | Critical | `core/constants/constants.dart` |
-| T-002 | Fix Default Image URL | Replace Google Images search URL with proper fallback | PENDING | High | `core/constants/constants.dart` |
+| T-001 | Remove Hardcoded API Key | Move NewsAPI key to `--dart-define` env variable | DONE | Critical | `core/constants/constants.dart`, `.env.example` |
+| T-002 | Fix Default Image URL | Replace Google Images search URL with `placehold.co` placeholder | DONE | High | `core/constants/constants.dart` |
 
 ### 3.2 Null Safety Fixes
 
@@ -126,7 +126,7 @@
 |---|------------|-------------|--------|----------|---------|
 | T-007 | Replace `DioError` in Domain/Presentation | Replaced with `AppException` at repository boundary | DONE | Medium | `data_state.dart`, `remote_article_state.dart`, `article_repository_impl.dart` |
 | T-008 | Replace `DioErrorType.response` | Caught at repository boundary, converted to AppException | DONE | Medium | `article_repository_impl.dart` |
-| T-009 | Update Dart SDK Constraint | Change `>=2.16.1 <3.0.0` to match actual requirement | PENDING | Medium | `pubspec.yaml` |
+| T-009 | Update Dart SDK Constraint | Changed `>=2.16.1 <3.0.0` to `>=3.3.0 <4.0.0` | DONE | Medium | `pubspec.yaml` |
 
 ### 3.4 Architecture Improvements
 
@@ -134,7 +134,7 @@
 |---|------------|-------------|--------|----------|---------|
 | T-010 | Remove Dio from DataState | Created `AppException`, removed Dio import from core | DONE | High | `core/resources/data_state.dart`, `core/resources/app_exception.dart` |
 | T-011 | Remove Dio from Presentation States | States now use `AppException` not `DioError` | DONE | High | `bloc/article/remote/remote_article_state.dart` |
-| T-012 | Add LocalArticlesError State | No error state exists for local BLoC | PENDING | Medium | `bloc/article/local/local_article_state.dart` |
+| T-012 | Add LocalArticlesError State | Added `LocalArticlesError` state, try/catch in BLoC, error UI with retry | DONE | Medium | `local_article_state.dart`, `local_article_bloc.dart`, `saved_article.dart` |
 | T-013 | Implement `toEntity()` on Models | Added `toEntity()` to `ArticleModel` | DONE | Medium | `data/models/article.dart` |
 | T-014 | Rename `pages` to `screens` | Architecture doc specifies `screens` folder | PENDING | Low | `presentation/pages/` |
 | T-015 | Add `shared` Folder | Architecture doc specifies a `shared` folder | PENDING | Low | `lib/` |
@@ -158,7 +158,7 @@
 | T-023 | Add Unit Tests for Repository | 5 tests covering success/failure/model conversion | DONE | Medium | `test/features/create_article/data/repository/` |
 | T-024 | Add Model Tests | 8 tests covering serialization, entity conversion | DONE | Medium | `test/features/create_article/data/models/` |
 | T-025 | Add Entity Tests | 4 tests covering equality, nullable fields, props | DONE | Medium | `test/features/create_article/domain/entities/` |
-| T-026 | Add Widget Tests | UI component tests not yet created | PENDING | Medium | `test/` (to create) |
+| T-026 | Add Widget Tests | 21 widget tests for ArticleTextField (7), ImagePickerWidget (7), SubmitArticleButton (7) | DONE | Medium | `test/features/create_article/presentation/widgets/` |
 
 ---
 
@@ -208,8 +208,8 @@
 |----------|-------|------|---------|---------|----------|
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
-| New Features (Required) | 27 | 25 | 0 | 1 | 1 |
-| Technical Improvements | 26 | 12 | 1 | 13 | 0 |
+| New Features (Required) | 27 | 26 | 0 | 1 | 0 |
+| Technical Improvements | 26 | 16 | 1 | 9 | 0 |
 | UI Improvements | 10 | 0 | 0 | 10 | 0 |
 | Overdelivery Features | 16 | 5 | 0 | 11 | 0 |
-| **Total** | **95** | **58** | **1** | **35** | **1** |
+| **Total** | **95** | **63** | **1** | **31** | **0** |

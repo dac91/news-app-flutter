@@ -52,9 +52,9 @@ I decided to approach this like a real product task, not a coding exercise. That
 ### Challenge 3: Storage Bucket Requires Billing
 **What I found**: Firebase Storage requires the Blaze (pay-as-you-go) billing plan to create a storage bucket. The free Spark plan doesn't support it.
 
-**How I solved it**: I wrote the storage security rules (`backend/storage.rules`) and the `StorageArticleDataSourceImpl` implementation, but deferred actual deployment until the billing plan is enabled. The code is complete and will work once the bucket exists — the app gracefully handles the upload failure via `AppException` in the meantime.
+**How I solved it**: I wrote the storage security rules (`backend/storage.rules`) and the `StorageArticleDataSourceImpl` implementation while the billing plan was being set up. Once Blaze billing was enabled, I deployed the storage rules successfully. The rules enforce image-only content types, 5MB maximum file size, and restrict uploads to the `media/articles/` path.
 
-**Lesson**: Infrastructure dependencies should be documented as prerequisites, not discovered at deploy time.
+**Lesson**: Infrastructure dependencies should be documented as prerequisites, not discovered at deploy time. Writing the code and rules ahead of deployment meant the deploy was a single command once billing was ready.
 
 ### Challenge 4: Choosing Cubit vs Bloc for the New Feature
 **What I considered**: The existing `daily_news` feature uses full `Bloc` with events and states. Should the new `create_article` feature follow the same pattern?
@@ -95,7 +95,7 @@ I decided to approach this like a real product task, not a coding exercise. That
 
 ## 5. Proof of the Project
 
-> **Note**: Screenshots and screen recordings will be added here after the app is run on an Android device/emulator with Firebase Storage enabled (requires Blaze billing plan).
+> **Note**: Screenshots and screen recordings will be added here after the app is run on an Android device/emulator. Firebase backend (Firestore + Storage) is fully deployed and operational.
 
 ### Architecture Overview
 The feature follows clean architecture with 3 layers:
@@ -135,10 +135,11 @@ create_article/
 ```
 
 ### Test Coverage
-34 unit tests across all layers:
+55 tests across all layers — all passing:
 - **Domain**: 10 tests (entity equality, use case success/failure/param verification)
 - **Data**: 13 tests (model serialization, repository success/failure, entity-model conversion)
-- **Presentation**: 11 tests (Cubit state transitions, error handling, param passing, state equality)
+- **Presentation — Cubit**: 11 tests (state transitions, error handling, param passing, state equality)
+- **Presentation — Widgets**: 21 tests (ArticleTextField: 7, ImagePickerWidget: 7, SubmitArticleButton: 7)
 
 ## 6. Overdelivery
 
@@ -166,6 +167,18 @@ create_article/
 **Functionality**: When article submission fails after image upload, the error state preserves the uploaded image URL. The user can fix their form and retry without re-uploading the image.
 **Purpose**: Losing an uploaded image to a transient network error is unacceptable UX.
 
+#### f. API Key Security Hardening
+**Functionality**: Moved the NewsAPI key from a hardcoded constant to `--dart-define` build-time injection via `String.fromEnvironment('NEWS_API_KEY')`. Created `.env.example` with setup instructions. The `.gitignore` already excludes `.env` files.
+**Purpose**: Hardcoded API keys in source control are a security vulnerability. Build-time injection keeps secrets out of the repository while remaining easy to configure.
+
+#### g. Local BLoC Error Handling
+**Functionality**: Added `LocalArticlesError` state to the local article BLoC, wrapped all event handlers in try/catch, and updated the Saved Articles page to display an error state with a retry button.
+**Purpose**: The original code had no error handling for local database operations — any Floor exception would crash silently. Users now see a clear error message and can retry.
+
+#### h. Comprehensive Widget Tests
+**Functionality**: 21 widget tests covering all 3 reusable presentation widgets: `ArticleTextField` (7 tests: rendering, input, max length, validation), `ImagePickerWidget` (7 tests: placeholder, uploading, uploaded badge, tap behavior, file preview, dimensions), `SubmitArticleButton` (7 tests: rendering, enabled/disabled states, loading indicator, tap behavior).
+**Purpose**: Widget tests verify that the UI layer renders correctly and responds to user interaction. Combined with the 34 unit tests, this gives 55 total tests with coverage across all architectural layers.
+
 ### 2. Prototypes Created
 
 #### a. DB Schema Documentation
@@ -182,7 +195,7 @@ create_article/
 
 ### 3. How Can You Improve This
 
-- **Widget Tests**: Add widget tests for `CreateArticlePage`, `ImagePickerWidget`, and `ArticleTextField` using `flutter_test` and `BlocTest`. Currently the presentation layer only has Cubit unit tests.
+- **Widget Tests for CreateArticlePage**: The individual widgets (`ArticleTextField`, `ImagePickerWidget`, `SubmitArticleButton`) have full test coverage (21 tests). Adding widget tests for the parent `CreateArticlePage` would require mocking `BlocProvider` and verifying the form integration.
 - **Integration Tests**: Add end-to-end tests using `integration_test` package that exercise the full flow from form entry to Firestore write.
 - **CI/CD Pipeline**: Set up GitHub Actions to run `flutter analyze`, `flutter test`, and `flutter build apk` on every push.
 - **Firestore Emulator Tests**: Use the Firebase Emulator Suite to test Firestore security rules and data source implementations against a local emulator instead of production.
@@ -199,6 +212,8 @@ create_article/
 | `6a907f1` | feat: add domain layer for article creation with TDD tests |
 | `8307400` | feat: add data layer for article creation with tests (23/23 passing) |
 | `4556001` | feat: add presentation layer, DI wiring, and routing for article creation (34/34 tests passing) |
+| `5878141` | docs: add project report and update feature tracking |
+| *(latest)* | fix: security hardening, widget tests, error handling, and polish (55/55 tests passing) |
 
 ### Architecture Decisions Record
 
@@ -212,9 +227,10 @@ create_article/
 | Image compression at 85% quality | Balances file size (~60% reduction) with visual quality; configurable via `image_picker` parameter |
 
 ### Metrics
-- **Total tests**: 34 (all passing)
+- **Total tests**: 55 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated file)
-- **New files created**: 17 (7 production, 6 test, 4 documentation)
-- **Existing files modified**: 10 (bug fixes, DI registration, routing)
+- **New files created**: 20 (7 production, 9 test, 4 documentation)
+- **Existing files modified**: 13 (bug fixes, security hardening, error handling, DI registration, routing)
 - **Architecture violations fixed**: 6 (in existing code)
+- **Security fixes**: 1 (API key moved out of source control)
 - **Documentation pages created**: 6 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`)
