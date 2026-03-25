@@ -2,6 +2,32 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    //TODO: WRITE ANY NECESSARY STORAGE RULES HERE
+
+    // ── Article thumbnail images ─────────────────────────────────────
+    // Path: media/articles/{filename}
+    match /media/articles/{fileName} {
+
+      // Anyone can read images (no auth required for v1)
+      allow read: if true;
+
+      // Anyone can upload images with constraints
+      allow create: if isValidImage();
+
+      // No updates or deletes in v1
+      allow update, delete: if false;
     }
+
+    // ── Validation function ──────────────────────────────────────────
+    function isValidImage() {
+      // Must be an image content type
+      return request.resource.contentType.matches('image/.*')
+        // Max 5 MB
+        && request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    // ── Deny everything else ─────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
 }
