@@ -54,6 +54,7 @@ dev_dependencies:
   retrofit_generator: 3.0.1+1
   floor_generator: 1.2.0
   build_runner: 2.1.2
+  mocktail: ^1.0.0
   
 
 flutter:
