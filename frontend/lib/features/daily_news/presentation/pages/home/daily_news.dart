@@ -69,9 +69,7 @@ class DailyNews extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: REPLACE ROUTE WITH YOUR "ADD ARTICLE" PAGE
-        },
+        onPressed: () => _onCreateArticleTapped(context),
         child: const Icon(Icons.add),
       ),
     );
@@ -83,5 +81,9 @@ class DailyNews extends StatelessWidget {
 
   void _onShowSavedArticlesViewTapped(BuildContext context) {
     Navigator.pushNamed(context, '/SavedArticles');
+  }
+
+  void _onCreateArticleTapped(BuildContext context) {
+    Navigator.pushNamed(context, '/CreateArticle');
   }
 }
