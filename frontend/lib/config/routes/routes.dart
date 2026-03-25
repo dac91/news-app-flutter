@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/create_article/presentation/cubit/create_article_cubit.dart';
 import '../../features/create_article/presentation/screens/create_article_page.dart';
 import '../../features/daily_news/domain/entities/article.dart';
-import '../../features/daily_news/presentation/pages/article_detail/article_detail.dart';
-import '../../features/daily_news/presentation/pages/home/daily_news.dart';
-import '../../features/daily_news/presentation/pages/saved_article/saved_article.dart';
+import '../../features/daily_news/presentation/screens/article_detail/article_detail.dart';
+import '../../features/daily_news/presentation/screens/home/daily_news.dart';
+import '../../features/daily_news/presentation/screens/saved_article/saved_article.dart';
 import '../../injection_container.dart';
 
 class AppRoutes {

@@ -39,7 +39,10 @@ class ArticleWidget extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    return CachedNetworkImage(
+    final heroTag = 'article-image-${article?.id ?? article?.title?.hashCode ?? 0}';
+    return Hero(
+      tag: heroTag,
+      child: CachedNetworkImage(
         imageUrl: article?.urlToImage ?? kDefaultImage,
         imageBuilder: (context, imageProvider) => Padding(
               padding: const EdgeInsetsDirectional.only(end: 14),
@@ -82,7 +85,8 @@ class ArticleWidget extends StatelessWidget {
                   child: const Icon(Icons.error),
                 ),
               ),
-            ));
+            )),
+    );
   }
 
   Widget _buildTitleAndDescription() {

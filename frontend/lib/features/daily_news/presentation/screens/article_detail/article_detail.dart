@@ -82,19 +82,23 @@ class ArticleDetailsView extends HookWidget {
   }
 
   Widget _buildArticleImage() {
-    return Container(
-      width: double.maxFinite,
-      height: 250,
-      margin: const EdgeInsets.only(top: 14),
-      child: Image.network(
-        article?.urlToImage ?? kDefaultImage,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey.shade200,
-          child: Icon(
-            Icons.broken_image_outlined,
-            size: 48,
-            color: Colors.grey.shade400,
+    final heroTag = 'article-image-${article?.id ?? article?.title?.hashCode ?? 0}';
+    return Hero(
+      tag: heroTag,
+      child: Container(
+        width: double.maxFinite,
+        height: 250,
+        margin: const EdgeInsets.only(top: 14),
+        child: Image.network(
+          article?.urlToImage ?? kDefaultImage,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.grey.shade200,
+            child: Icon(
+              Icons.broken_image_outlined,
+              size: 48,
+              color: Colors.grey.shade400,
+            ),
           ),
         ),
       ),

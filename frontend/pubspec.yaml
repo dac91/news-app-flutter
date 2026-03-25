@@ -40,6 +40,21 @@ dependencies:
   # Image picker
   image_picker: ^1.0.7
 
+  # Shimmer loading
+  shimmer: ^3.0.0
+
+  # Sharing
+  share_plus: ^7.2.1
+
+  # Firebase Auth
+  firebase_auth: ^4.16.0
+
+  # Connectivity
+  connectivity_plus: ^5.0.2
+
+  # Shared preferences (drafts)
+  shared_preferences: ^2.2.2
+
 
   #Hooks
   flutter_hooks: ^0.18.3

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:ionicons/ionicons.dart';
 import '../../../../../injection_container.dart';
+import '../../../../../shared/widgets/empty_state_widget.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
 import '../../bloc/article/local/local_article_event.dart';
@@ -74,11 +75,11 @@ class SavedArticles extends HookWidget {
 
   Widget _buildArticlesList(List<ArticleEntity> articles) {
     if (articles.isEmpty) {
-      return const Center(
-          child: Text(
-        'NO SAVED ARTICLES',
-        style: TextStyle(color: Colors.black),
-      ));
+      return const EmptyStateWidget(
+        icon: Icons.bookmark_border_rounded,
+        title: 'No Saved Articles Yet',
+        subtitle: 'Articles you bookmark will appear here.\nTap the bookmark icon on any article to save it.',
+      );
     }
 
     return ListView.builder(
