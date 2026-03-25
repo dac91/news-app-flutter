@@ -135,7 +135,7 @@ create_article/
 ```
 
 ### Test Coverage
-104 tests across all layers — all passing:
+130 tests across all layers — all passing:
 - **Auth Domain**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data**: 5 tests (model conversion, Firebase user mapping, equality)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
@@ -144,6 +144,8 @@ create_article/
 - **Create Article Presentation — Cubit**: 17 tests (state transitions for create/update/upload/reset, error handling, null use case guard)
 - **Create Article Presentation — Widgets**: 21 tests (ArticleTextField: 7, ImagePickerWidget: 7, SubmitArticleButton: 7)
 - **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty author guard)
+- **Daily News Domain**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
+- **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
 
 ## 6. Overdelivery
 
@@ -323,7 +325,7 @@ create_article/
 | `e869eac` | fix: null safety hardening — remove all force-unwrap operators from existing UI |
 | `681071f` | fix: pull-to-refresh, error retry, use case null guards, remove unused intl, emulator docs |
 | `f43b47b` | feat: architecture cleanup, shimmer loading, hero animation, empty state, dark mode |
-| *(latest)* | feat: auth, editing, search, categories, drafts, sharing, pagination, offline, splash, bottom nav (104/104 tests) |
+| *(latest)* | feat: compliance fixes, daily_news tests, audit update (130/130 tests) |
 
 ### Architecture Decisions Record
 
@@ -342,12 +344,12 @@ create_article/
 | connectivity_plus for offline | Lightweight check before API calls; degrades to cached articles instead of showing error |
 
 ### Metrics
-- **Total tests**: 104 (all passing)
-- **Flutter analyze**: 0 errors, 0 warnings, 0 infos (completely clean)
-- **New files created**: 45+ (production code, tests, documentation)
-- **Features implemented**: 93 of 97 tracked items (96%)
-- **Architecture violations fixed**: 6 (in existing code)
+- **Total tests**: 130 (all passing)
+- **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
+- **New files created**: 50+ (production code, tests, documentation)
+- **Features implemented**: 97 of 101 tracked items (96%)
+- **Architecture violations fixed**: 6 (in existing code) + 6 compliance fixes this session
 - **Null safety fixes**: 5 files with force-unwrap operators replaced with safe alternatives
 - **Security fixes**: 1 (API key moved out of source control)
 - **Documentation pages created**: 8 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`)
-- **Feature tracking**: 93 of 97 items complete (96%), 4 deferred (low priority / out of scope)
+- **Feature tracking**: 97 of 101 items complete (96%), 4 deferred (low priority / out of scope)

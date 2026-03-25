@@ -1,5 +1,10 @@
-abstract class RemoteArticlesEvent {
+import 'package:equatable/equatable.dart';
+
+abstract class RemoteArticlesEvent extends Equatable {
   const RemoteArticlesEvent();
+
+  @override
+  List<Object?> get props => [];
 }
 
 class GetArticles extends RemoteArticlesEvent {
@@ -7,6 +12,9 @@ class GetArticles extends RemoteArticlesEvent {
   final String? query;
 
   const GetArticles({this.category, this.query});
+
+  @override
+  List<Object?> get props => [category, query];
 }
 
 /// Loads the next page of articles (infinite scroll).

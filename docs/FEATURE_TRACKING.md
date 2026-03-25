@@ -161,6 +161,19 @@
 | T-026 | Add Widget Tests | 21 widget tests for ArticleTextField (7), ImagePickerWidget (7), SubmitArticleButton (7) | DONE | Medium | `test/features/create_article/presentation/widgets/` |
 | T-027 | Add Auth Tests | 32 tests for UserEntity (4), UserModel (5), auth use cases (10), AuthCubit (13) | DONE | High | `test/features/auth/` |
 | T-028 | Add MyArticlesCubit Tests | 6 tests for my articles fetch/error/empty/exception handling | DONE | Medium | `test/features/create_article/presentation/cubit/` |
+| T-029 | Add Daily News Use Case Tests | 13 tests: GetArticle (4), SaveArticle (3), RemoveArticle (3), GetSavedArticle (3) | DONE | High | `test/features/daily_news/domain/usecases/` |
+| T-030 | Add RemoteArticlesBloc Tests | 5 tests: initial state, success, error, params passing, pagination/hasReachedMax | DONE | High | `test/features/daily_news/presentation/bloc/` |
+| T-031 | Add LocalArticleBloc Tests | 6 tests: getSaved success/error, save+reload, remove+reload, save error, remove error | DONE | High | `test/features/daily_news/presentation/bloc/` |
+
+### 3.7 Compliance Fixes
+
+| # | Improvement | Description | Status | Priority | File(s) |
+|---|------------|-------------|--------|----------|---------|
+| T-032 | Remove flutter_hooks Dead Import | Removed `flutter_hooks` import; changed `HookWidget` → `StatelessWidget` | DONE | Low | `article_detail.dart`, `saved_article.dart` |
+| T-033 | Add Equatable to RemoteArticlesEvent | Added `extends Equatable` and `props` for consistency with `LocalArticlesEvent` | DONE | Low | `remote_article_event.dart` |
+| T-034 | Isolate Firebase from Auth Repository | Moved `FirebaseAuthException` handling into data source; repo catches `AppException` only | DONE | Medium | `firebase_auth_data_source_impl.dart`, `auth_repository_impl.dart` |
+| T-035 | Register DraftService in DI | Added `DraftService` singleton to `injection_container.dart`; presentation uses `sl<DraftService>()` | DONE | Medium | `injection_container.dart`, `create_article_page.dart` |
+| T-036 | Fix List<dynamic> Type in RemoteArticlesBloc | Added explicit `<ArticleEntity>` type annotations and import | DONE | Medium | `remote_article_bloc.dart` |
 
 ---
 
@@ -211,9 +224,11 @@
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
 | New Features (Required) | 27 | 27 | 0 | 0 | 0 |
-| Technical Improvements | 28 | 28 | 0 | 0 | 0 |
+| Technical Improvements | 36 | 36 | 0 | 0 | 0 |
 | UI Improvements | 10 | 10 | 0 | 0 | 0 |
 | Overdelivery Features | 16 | 12 | 0 | 0 | 4 |
-| **Total** | **97** | **93** | **0** | **0** | **4** |
+| **Total** | **105** | **101** | **0** | **0** | **4** |
 
 > **Note on deferred items**: O-004 (Rich Text Editor), O-006 (Multi-Image Gallery), and O-008 (Push Notifications) were deferred as low-ROI for the assignment scope — they would add complexity without demonstrating additional architectural skill. O-011 (CI/CD Pipeline) is not relevant for this assignment submission but would be essential in a production environment. A GitHub Actions workflow running `flutter analyze`, `flutter test`, and `flutter build apk` on every push to `main` would be the standard setup.
+> 
+> **Test counts**: 130 total tests — auth (32), create_article (74), daily_news (24). All passing.

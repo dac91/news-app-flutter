@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:news_app_clean_architecture/core/resources/app_exception.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_data_source.dart';
@@ -7,10 +6,12 @@ import 'package:news_app_clean_architecture/features/auth/domain/params/sign_in_
 import 'package:news_app_clean_architecture/features/auth/domain/params/sign_up_params.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
 
-/// Concrete implementation of [AuthRepository] using Firebase Auth.
+/// Concrete implementation of [AuthRepository].
 ///
-/// Catches [FirebaseAuthException] from the data source and wraps them
-/// in [AppException] so the domain and presentation layers remain pure.
+/// The data source layer handles Firebase-specific exception mapping
+/// (converting [FirebaseAuthException] → [AppException]). This repository
+/// catches those [AppException]s and wraps them in [DataFailed], keeping
+/// the data layer free of Firebase imports at the repository level (AV 1.2.4).
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthDataSource _dataSource;
 
@@ -24,11 +25,8 @@ class AuthRepositoryImpl implements AuthRepository {
         params.password,
       );
       return DataSuccess(user.toEntity());
-    } on FirebaseAuthException catch (e) {
-      return DataFailed(AppException(
-        message: _mapFirebaseErrorMessage(e.code),
-        identifier: 'AuthRepository.signIn',
-      ));
+    } on AppException catch (e) {
+      return DataFailed(e);
     } catch (e) {
       return DataFailed(AppException(
         message: e.toString(),
@@ -46,11 +44,8 @@ class AuthRepositoryImpl implements AuthRepository {
         params.displayName,
       );
       return DataSuccess(user.toEntity());
-    } on FirebaseAuthException catch (e) {
-      return DataFailed(AppException(
-        message: _mapFirebaseErrorMessage(e.code),
-        identifier: 'AuthRepository.signUp',
-      ));
+    } on AppException catch (e) {
+      return DataFailed(e);
     } catch (e) {
       return DataFailed(AppException(
         message: e.toString(),
@@ -81,29 +76,5 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Stream<UserEntity?> get authStateChanges {
     return _dataSource.authStateChanges.map((model) => model?.toEntity());
-  }
-
-  /// Maps Firebase Auth error codes to user-friendly messages.
-  String _mapFirebaseErrorMessage(String code) {
-    switch (code) {
-      case 'user-not-found':
-        return 'No account found with this email address.';
-      case 'wrong-password':
-        return 'Incorrect password. Please try again.';
-      case 'email-already-in-use':
-        return 'An account already exists with this email address.';
-      case 'weak-password':
-        return 'Password is too weak. Use at least 6 characters.';
-      case 'invalid-email':
-        return 'Please enter a valid email address.';
-      case 'user-disabled':
-        return 'This account has been disabled.';
-      case 'too-many-requests':
-        return 'Too many attempts. Please try again later.';
-      case 'invalid-credential':
-        return 'Invalid email or password. Please check and try again.';
-      default:
-        return 'Authentication failed. Please try again.';
-    }
   }
 }

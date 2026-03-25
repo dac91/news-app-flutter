@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../../core/constants/constants.dart';
@@ -9,7 +8,7 @@ import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
 import '../../bloc/article/local/local_article_event.dart';
 
-class ArticleDetailsView extends HookWidget {
+class ArticleDetailsView extends StatelessWidget {
   final ArticleEntity? article;
 
   const ArticleDetailsView({Key? key, this.article}) : super(key: key);

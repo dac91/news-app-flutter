@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:news_app_clean_architecture/core/services/connectivity_service.dart';
+import 'package:news_app_clean_architecture/core/services/draft_service.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_data_source.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_data_source_impl.dart';
 import 'package:news_app_clean_architecture/features/auth/data/repository/auth_repository_impl.dart';
@@ -52,6 +53,9 @@ Future<void> initializeDependencies() async {
 
   // Connectivity
   sl.registerSingleton<ConnectivityService>(ConnectivityService());
+
+  // Draft Service
+  sl.registerSingleton<DraftService>(DraftService());
 
   // --- auth feature ---
 

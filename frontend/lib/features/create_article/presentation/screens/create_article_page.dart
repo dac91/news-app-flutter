@@ -14,6 +14,7 @@ import 'package:news_app_clean_architecture/features/create_article/presentation
 import 'package:news_app_clean_architecture/features/create_article/presentation/widgets/article_text_field.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/widgets/image_picker_widget.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/widgets/submit_article_button.dart';
+import 'package:news_app_clean_architecture/injection_container.dart';
 
 /// Screen for creating and editing articles.
 ///
@@ -45,7 +46,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
   final _descriptionController = TextEditingController();
   final _contentController = TextEditingController();
   final _authorController = TextEditingController();
-  final _draftService = DraftService();
+  final _draftService = sl<DraftService>();
 
   File? _selectedImage;
   String? _uploadedImageUrl;
