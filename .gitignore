@@ -1,0 +1,20 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OpenCode / MCP config (local tool config, not project code)
+.mcp.json
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Node (if Firebase tools installed locally)
+node_modules/
