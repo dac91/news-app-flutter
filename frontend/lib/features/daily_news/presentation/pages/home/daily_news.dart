@@ -56,18 +56,17 @@ class DailyNews extends StatelessWidget {
 
   Widget _buildArticlesPage(
       BuildContext context, List<ArticleEntity> articles) {
-    List<Widget> articleWidgets = [];
-    for (var article in articles) {
-      articleWidgets.add(ArticleWidget(
-        article: article,
-        onArticlePressed: (article) => _onArticlePressed(context, article),
-      ));
-    }
-
     return Scaffold(
       appBar: _buildAppbar(context),
-      body: ListView(
-        children: articleWidgets,
+      body: ListView.builder(
+        itemCount: articles.length,
+        itemBuilder: (context, index) {
+          return ArticleWidget(
+            article: articles[index],
+            onArticlePressed: (article) =>
+                _onArticlePressed(context, article),
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
