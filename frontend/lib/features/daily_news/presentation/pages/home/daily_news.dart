@@ -15,7 +15,7 @@ class DailyNews extends StatelessWidget {
     return _buildPage();
   }
 
-  _buildAppbar(BuildContext context) {
+  PreferredSizeWidget _buildAppbar(BuildContext context) {
     return AppBar(
       title: const Text(
         'Daily News',
@@ -33,7 +33,7 @@ class DailyNews extends StatelessWidget {
     );
   }
 
-  _buildPage() {
+  Widget _buildPage() {
     return BlocBuilder<RemoteArticlesBloc, RemoteArticlesState>(
       builder: (context, state) {
         if (state is RemoteArticlesLoading) {
@@ -47,7 +47,7 @@ class DailyNews extends StatelessWidget {
               body: const Center(child: Icon(Icons.refresh)));
         }
         if (state is RemoteArticlesDone) {
-          return _buildArticlesPage(context, state.articles!);
+          return _buildArticlesPage(context, state.articles ?? []);
         }
         return const SizedBox();
       },

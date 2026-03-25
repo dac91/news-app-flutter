@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:ionicons/ionicons.dart';
+import '../../../../../core/constants/constants.dart';
 import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
@@ -56,7 +57,7 @@ class ArticleDetailsView extends HookWidget {
         children: [
           // Title
           Text(
-            article!.title!,
+            article?.title ?? '',
             style: const TextStyle(
                 fontFamily: 'Butler',
                 fontSize: 20,
@@ -70,7 +71,7 @@ class ArticleDetailsView extends HookWidget {
               const Icon(Ionicons.time_outline, size: 16),
               const SizedBox(width: 4),
               Text(
-                article!.publishedAt!,
+                article?.publishedAt ?? '',
                 style: const TextStyle(fontSize: 12),
               ),
             ],
@@ -85,7 +86,18 @@ class ArticleDetailsView extends HookWidget {
       width: double.maxFinite,
       height: 250,
       margin: const EdgeInsets.only(top: 14),
-      child: Image.network(article!.urlToImage!, fit: BoxFit.cover),
+      child: Image.network(
+        article?.urlToImage ?? kDefaultImage,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: Colors.grey.shade200,
+          child: Icon(
+            Icons.broken_image_outlined,
+            size: 48,
+            color: Colors.grey.shade400,
+          ),
+        ),
+      ),
     );
   }
 
@@ -93,7 +105,7 @@ class ArticleDetailsView extends HookWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
       child: Text(
-        '${article!.description ?? ''}\n\n${article!.content ?? ''}',
+        '${article?.description ?? ''}\n\n${article?.content ?? ''}',
         style: const TextStyle(fontSize: 16),
       ),
     );
@@ -113,7 +125,10 @@ class ArticleDetailsView extends HookWidget {
   }
 
   void _onFloatingActionButtonPressed(BuildContext context) {
-    BlocProvider.of<LocalArticleBloc>(context).add(SaveArticle(article!));
+    final currentArticle = article;
+    if (currentArticle == null) return;
+
+    BlocProvider.of<LocalArticleBloc>(context).add(SaveArticle(currentArticle));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         backgroundColor: Colors.black,

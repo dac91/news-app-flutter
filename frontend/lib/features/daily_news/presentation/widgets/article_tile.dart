@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/constants.dart';
 import '../../domain/entities/article.dart';
 
 class ArticleWidget extends StatelessWidget {
@@ -39,7 +40,7 @@ class ArticleWidget extends StatelessWidget {
 
   Widget _buildImage(BuildContext context) {
     return CachedNetworkImage(
-        imageUrl: article!.urlToImage!,
+        imageUrl: article?.urlToImage ?? kDefaultImage,
         imageBuilder: (context, imageProvider) => Padding(
               padding: const EdgeInsetsDirectional.only(end: 14),
               child: ClipRRect(
@@ -61,10 +62,10 @@ class ArticleWidget extends StatelessWidget {
                 child: Container(
                   width: MediaQuery.of(context).size.width / 3,
                   height: double.maxFinite,
-                  child: const CupertinoActivityIndicator(),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.08),
                   ),
+                  child: const CupertinoActivityIndicator(),
                 ),
               ),
             ),
@@ -75,10 +76,10 @@ class ArticleWidget extends StatelessWidget {
                 child: Container(
                   width: MediaQuery.of(context).size.width / 3,
                   height: double.maxFinite,
-                  child: const Icon(Icons.error),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.08),
                   ),
+                  child: const Icon(Icons.error),
                 ),
               ),
             ));
@@ -94,7 +95,7 @@ class ArticleWidget extends StatelessWidget {
           children: [
             // Title
             Text(
-              article!.title ?? '',
+              article?.title ?? '',
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -110,7 +111,7 @@ class ArticleWidget extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  article!.description ?? '',
+                  article?.description ?? '',
                   maxLines: 2,
                 ),
               ),
@@ -122,7 +123,7 @@ class ArticleWidget extends StatelessWidget {
                 const Icon(Icons.timeline_outlined, size: 16),
                 const SizedBox(width: 4),
                 Text(
-                  article!.publishedAt!,
+                  article?.publishedAt ?? '',
                   style: const TextStyle(
                     fontSize: 12,
                   ),
@@ -136,7 +137,7 @@ class ArticleWidget extends StatelessWidget {
   }
 
   Widget _buildRemovableArea() {
-    if (isRemovable!) {
+    if (isRemovable ?? false) {
       return GestureDetector(
         onTap: _onRemove,
         child: const Padding(
@@ -149,14 +150,16 @@ class ArticleWidget extends StatelessWidget {
   }
 
   void _onTap() {
-    if (onArticlePressed != null) {
-      onArticlePressed!(article!);
+    final currentArticle = article;
+    if (currentArticle != null && onArticlePressed != null) {
+      onArticlePressed!(currentArticle);
     }
   }
 
   void _onRemove() {
-    if (onRemove != null) {
-      onRemove!(article!);
+    final currentArticle = article;
+    if (currentArticle != null && onRemove != null) {
+      onRemove!(currentArticle);
     }
   }
 }

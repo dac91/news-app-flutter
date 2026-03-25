@@ -115,9 +115,9 @@
 
 | # | Improvement | Description | Status | Priority | File(s) |
 |---|------------|-------------|--------|----------|---------|
-| T-003 | Fix Force-Unwrap in Article Tile | Replace `article!.title!` with null-safe patterns | PENDING | High | `widgets/article_tile.dart` |
-| T-004 | Fix Force-Unwrap in Article Detail | Replace `article!.title!` with null guards | PENDING | High | `pages/article_detail/article_detail.dart` |
-| T-005 | Fix Force-Unwrap in Daily News | Replace `state.articles!` with null-safe access | PENDING | High | `pages/home/daily_news.dart` |
+| T-003 | Fix Force-Unwrap in Article Tile | Replace `article!.title!` with `?.` and `?? ''` / `?? kDefaultImage` patterns | DONE | High | `widgets/article_tile.dart` |
+| T-004 | Fix Force-Unwrap in Article Detail | Replace `article!.title!` with null guards, add `errorBuilder` to Image.network | DONE | High | `pages/article_detail/article_detail.dart` |
+| T-005 | Fix Force-Unwrap in Daily News | Replace `state.articles!` with `?? []`, add return type annotations | DONE | High | `pages/home/daily_news.dart` |
 | T-006 | Fix Equatable Props Crash | Override props per subclass instead of force-unwrap nullable | DONE | Critical | `remote_article_state.dart`, `local_article_state.dart`, `local_article_event.dart` |
 
 ### 3.3 Deprecation Fixes
@@ -146,7 +146,7 @@
 |---|------------|-------------|--------|----------|---------|
 | T-017 | Use ListView.builder | Replaced eager ListView with lazy ListView.builder | DONE | Medium | `pages/home/daily_news.dart` |
 | T-018 | Add `const` Constructors | Added const constructors to article_tile widgets | DONE | Low | `widgets/article_tile.dart` |
-| T-019 | Add Return Type Annotations | Not yet addressed | PENDING | Low | `pages/home/daily_news.dart` |
+| T-019 | Add Return Type Annotations | Added `PreferredSizeWidget` and `Widget` return types | DONE | Low | `pages/home/daily_news.dart` |
 | T-020 | Remove Unused `intl` Import | Not yet addressed | PENDING | Low | `pubspec.yaml` |
 
 ### 3.6 Testing
@@ -209,7 +209,7 @@
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
 | New Features (Required) | 27 | 26 | 0 | 1 | 0 |
-| Technical Improvements | 26 | 16 | 1 | 9 | 0 |
+| Technical Improvements | 26 | 20 | 1 | 5 | 0 |
 | UI Improvements | 10 | 0 | 0 | 10 | 0 |
 | Overdelivery Features | 16 | 5 | 0 | 11 | 0 |
-| **Total** | **95** | **63** | **1** | **31** | **0** |
+| **Total** | **95** | **67** | **1** | **27** | **0** |

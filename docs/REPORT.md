@@ -179,6 +179,10 @@ create_article/
 **Functionality**: 21 widget tests covering all 3 reusable presentation widgets: `ArticleTextField` (7 tests: rendering, input, max length, validation), `ImagePickerWidget` (7 tests: placeholder, uploading, uploaded badge, tap behavior, file preview, dimensions), `SubmitArticleButton` (7 tests: rendering, enabled/disabled states, loading indicator, tap behavior).
 **Purpose**: Widget tests verify that the UI layer renders correctly and responds to user interaction. Combined with the 34 unit tests, this gives 55 total tests with coverage across all architectural layers.
 
+#### i. Null Safety Hardening Across Existing UI
+**Functionality**: Replaced all force-unwrap (`!`) operators on nullable fields across `article_tile.dart`, `article_detail.dart`, and `daily_news.dart` with null-safe alternatives (`?.`, `?? ''`, `?? kDefaultImage`, `?? false`, `?? []`). Added `errorBuilder` to `Image.network` in article detail for graceful image failure handling. Added missing return type annotations.
+**Purpose**: Every `!` on a nullable `ArticleEntity` field was a latent crash — if any API article had a null `title`, `urlToImage`, or `publishedAt`, the app would throw `Null check operator used on a null value` at runtime. The NewsAPI frequently returns articles with null fields, making these real production crashes, not theoretical risks.
+
 ### 2. Prototypes Created
 
 #### a. DB Schema Documentation
@@ -214,6 +218,7 @@ create_article/
 | `4556001` | feat: add presentation layer, DI wiring, and routing for article creation (34/34 tests passing) |
 | `5878141` | docs: add project report and update feature tracking |
 | *(latest)* | fix: security hardening, widget tests, error handling, and polish (55/55 tests passing) |
+| *(latest)* | fix: null safety hardening — remove all force-unwrap operators from existing UI (55/55 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
@@ -228,9 +233,10 @@ create_article/
 
 ### Metrics
 - **Total tests**: 55 (all passing)
-- **Flutter analyze**: 0 errors, 0 warnings (1 info in generated file)
+- **Flutter analyze**: 0 errors, 0 warnings, 0 infos (completely clean)
 - **New files created**: 20 (7 production, 9 test, 4 documentation)
-- **Existing files modified**: 13 (bug fixes, security hardening, error handling, DI registration, routing)
+- **Existing files modified**: 16 (bug fixes, null safety, security hardening, error handling, DI registration, routing)
 - **Architecture violations fixed**: 6 (in existing code)
+- **Null safety fixes**: 3 files with force-unwrap operators replaced with safe alternatives
 - **Security fixes**: 1 (API key moved out of source control)
 - **Documentation pages created**: 6 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`)
