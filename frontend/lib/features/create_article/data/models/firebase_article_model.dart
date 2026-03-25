@@ -14,6 +14,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
     required String content,
     required String author,
     required String thumbnailUrl,
+    String? category,
     DateTime? createdAt,
   }) : super(
           id: id,
@@ -22,6 +23,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
           content: content,
           author: author,
           thumbnailUrl: thumbnailUrl,
+          category: category,
           createdAt: createdAt,
         );
 
@@ -40,6 +42,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       content: data['content'] as String? ?? '',
       author: data['author'] as String? ?? '',
       thumbnailUrl: data['thumbnailURL'] as String? ?? '',
+      category: data['category'] as String?,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : null,
@@ -58,7 +61,23 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       'content': content,
       'author': author,
       'thumbnailURL': thumbnailUrl,
+      if (category != null) 'category': category,
       'createdAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  /// Converts the model to a JSON map for Firestore updates.
+  ///
+  /// Unlike [toJson], this does NOT overwrite `createdAt` since
+  /// the original creation timestamp should be preserved on edits.
+  Map<String, dynamic> toUpdateJson() {
+    return {
+      'title': title,
+      'description': description,
+      'content': content,
+      'author': author,
+      'thumbnailURL': thumbnailUrl,
+      if (category != null) 'category': category,
     };
   }
 
@@ -71,6 +90,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       content: content,
       author: author,
       thumbnailUrl: thumbnailUrl,
+      category: category,
       createdAt: createdAt,
     );
   }
@@ -84,6 +104,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       content: entity.content,
       author: entity.author,
       thumbnailUrl: entity.thumbnailUrl,
+      category: entity.category,
       createdAt: entity.createdAt,
     );
   }

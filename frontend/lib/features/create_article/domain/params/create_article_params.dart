@@ -10,6 +10,7 @@ class CreateArticleParams extends Equatable {
   final String content;
   final String author;
   final String thumbnailUrl;
+  final String? category;
 
   const CreateArticleParams({
     required this.title,
@@ -17,8 +18,9 @@ class CreateArticleParams extends Equatable {
     required this.content,
     required this.author,
     required this.thumbnailUrl,
+    this.category,
   });
 
   @override
-  List<Object?> get props => [title, description, content, author, thumbnailUrl];
+  List<Object?> get props => [title, description, content, author, thumbnailUrl, category];
 }

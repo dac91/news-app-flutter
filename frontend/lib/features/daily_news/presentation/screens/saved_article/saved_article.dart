@@ -12,7 +12,11 @@ import '../../bloc/article/local/local_article_state.dart';
 import '../../widgets/article_tile.dart';
 
 class SavedArticles extends HookWidget {
-  const SavedArticles({Key ? key}) : super(key: key);
+  /// When true, shows a back button in the AppBar (push-based navigation).
+  /// When false, shows no back button (tab-based navigation).
+  final bool showBackButton;
+
+  const SavedArticles({Key ? key, this.showBackButton = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +31,16 @@ class SavedArticles extends HookWidget {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      leading: Builder(
-        builder: (context) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _onBackButtonTapped(context),
-          child: const Icon(Ionicons.chevron_back, color: Colors.black),
-        ),
-      ),
+      leading: showBackButton
+          ? Builder(
+              builder: (context) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _onBackButtonTapped(context),
+                child: const Icon(Ionicons.chevron_back, color: Colors.black),
+              ),
+            )
+          : null,
+      automaticallyImplyLeading: showBackButton,
       title: const Text('Saved Articles', style: TextStyle(color: Colors.black)),
     );
   }

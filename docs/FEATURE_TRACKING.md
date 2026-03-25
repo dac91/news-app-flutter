@@ -38,7 +38,7 @@
 | A-001 | Clean Architecture | 3-layer separation: data, domain, presentation | DONE | `lib/features/daily_news/` |
 | A-002 | BLoC State Management | Remote and Local BLoCs with events and states | DONE | `bloc/article/remote/`, `bloc/article/local/` |
 | A-003 | Dependency Injection | GetIt service locator with all deps registered | DONE | `injection_container.dart` |
-| A-004 | Named Routing | Route handler for `/`, `/ArticleDetails`, `/SavedArticles`, `/CreateArticle` | DONE | `config/routes/routes.dart` |
+| A-004 | Named Routing | Route handler for `/`, `/ArticleDetails`, `/SavedArticles`, `/CreateArticle`, `/EditArticle`, `/MyArticles`, `/Login`, `/SignUp` | DONE | `config/routes/routes.dart` |
 | A-005 | Custom Theme | Muli font, white scaffold, styled AppBar | DONE | `config/theme/app_themes.dart` |
 | A-006 | Local Database (Floor) | SQLite ORM with ArticleModel entity and ArticleDao | DONE | `data_sources/local/` |
 | A-007 | REST API Client (Retrofit) | Code-generated HTTP client for NewsAPI | DONE | `data_sources/remote/` |
@@ -136,8 +136,8 @@
 | T-011 | Remove Dio from Presentation States | States now use `AppException` not `DioError` | DONE | High | `bloc/article/remote/remote_article_state.dart` |
 | T-012 | Add LocalArticlesError State | Added `LocalArticlesError` state, try/catch in BLoC, error UI with retry | DONE | Medium | `local_article_state.dart`, `local_article_bloc.dart`, `saved_article.dart` |
 | T-013 | Implement `toEntity()` on Models | Added `toEntity()` to `ArticleModel` | DONE | Medium | `data/models/article.dart` |
-| T-014 | Rename `pages` to `screens` | Architecture doc specifies `screens` folder | PENDING | Low | `presentation/pages/` |
-| T-015 | Add `shared` Folder | Architecture doc specifies a `shared` folder | PENDING | Low | `lib/` |
+| T-014 | Rename `pages` to `screens` | Architecture doc specifies `screens` folder | DONE | Low | `presentation/screens/` |
+| T-015 | Add `shared` Folder | Architecture doc specifies a `shared` folder with reusable widgets | DONE | Low | `lib/shared/widgets/` |
 | T-016 | Fix Force-Unwrap in Use Case Params | Replaced `params!` with `ArgumentError.notNull` guard in `save_article.dart` and `remove_article.dart` | DONE | Medium | `domain/usecases/save_article.dart`, `domain/usecases/remove_article.dart` |
 
 ### 3.5 Code Quality Improvements
@@ -153,12 +153,14 @@
 
 | # | Improvement | Description | Status | Priority | File(s) |
 |---|------------|-------------|--------|----------|---------|
-| T-021 | Add Unit Tests for New Use Cases | 6 tests covering create + upload use cases | DONE | High | `test/features/create_article/domain/usecases/` |
-| T-022 | Add Unit Tests for Cubit | 11 tests covering all state transitions and edge cases | DONE | High | `test/features/create_article/presentation/cubit/` |
+| T-021 | Add Unit Tests for New Use Cases | 12 tests covering create + upload + update + getByAuthor use cases | DONE | High | `test/features/create_article/domain/usecases/` |
+| T-022 | Add Unit Tests for Cubit | 17 tests covering all state transitions (create, update, upload, reset) | DONE | High | `test/features/create_article/presentation/cubit/` |
 | T-023 | Add Unit Tests for Repository | 5 tests covering success/failure/model conversion | DONE | Medium | `test/features/create_article/data/repository/` |
 | T-024 | Add Model Tests | 8 tests covering serialization, entity conversion | DONE | Medium | `test/features/create_article/data/models/` |
-| T-025 | Add Entity Tests | 4 tests covering equality, nullable fields, props | DONE | Medium | `test/features/create_article/domain/entities/` |
+| T-025 | Add Entity Tests | 5 tests covering equality, nullable fields, props, category | DONE | Medium | `test/features/create_article/domain/entities/` |
 | T-026 | Add Widget Tests | 21 widget tests for ArticleTextField (7), ImagePickerWidget (7), SubmitArticleButton (7) | DONE | Medium | `test/features/create_article/presentation/widgets/` |
+| T-027 | Add Auth Tests | 32 tests for UserEntity (4), UserModel (5), auth use cases (10), AuthCubit (13) | DONE | High | `test/features/auth/` |
+| T-028 | Add MyArticlesCubit Tests | 6 tests for my articles fetch/error/empty/exception handling | DONE | Medium | `test/features/create_article/presentation/cubit/` |
 
 ---
 
@@ -167,14 +169,14 @@
 | # | Improvement | Description | Status | Priority |
 |---|------------|-------------|--------|----------|
 | U-001 | Pull-to-Refresh | Added `RefreshIndicator` wrapping `ListView.builder` on home page | DONE | Medium |
-| U-002 | Shimmer Loading | Replace activity indicator with skeleton loading | PENDING | Low |
-| U-003 | Category Filters | Add horizontal chip bar for categories | PENDING | Low |
-| U-004 | Search Functionality | Add search bar in AppBar | PENDING | Low |
-| U-005 | Hero Image Animation | Add hero animation from list to detail | PENDING | Low |
-| U-006 | Empty State Illustration | Add illustration for empty saved articles | PENDING | Low |
-| U-007 | Dark Mode Support | Add dark theme variant | PENDING | Low |
-| U-008 | Bottom Navigation | Add bottom nav for Home / Saved / Create | PENDING | Low |
-| U-009 | Splash Screen | Implement proper splash screen | PENDING | Low |
+| U-002 | Shimmer Loading | Replace activity indicator with skeleton shimmer loading | DONE | Low |
+| U-003 | Category Filters | Horizontal chip bar for category filtering (7 categories) | DONE | Low |
+| U-004 | Search Functionality | Debounced search bar in AppBar with clear button | DONE | Low |
+| U-005 | Hero Image Animation | Hero animation wrapping images from list to detail | DONE | Low |
+| U-006 | Empty State Illustration | EmptyStateWidget for empty saved articles | DONE | Low |
+| U-007 | Dark Mode Support | ThemeCubit with light/dark/system modes, persisted to SharedPreferences | DONE | Low |
+| U-008 | Bottom Navigation | 4-tab bottom nav (Home/Saved/Create/Profile) with IndexedStack | DONE | Low |
+| U-009 | Splash Screen | Animated splash with fade-in + scale, 2-second transition | DONE | Low |
 | U-010 | Error Retry on Home | Made error icon tappable with `GestureDetector`, shows "Tap to retry" text, dispatches `GetArticles` | DONE | Medium |
 
 ---
@@ -183,17 +185,17 @@
 
 | # | Feature | Description | Status | Priority |
 |---|---------|-------------|--------|----------|
-| O-001 | User Authentication | Firebase Auth for journalist sign-in | PENDING | Low |
-| O-002 | Article Editing | Edit previously uploaded articles | PENDING | Low |
-| O-003 | Article Categories/Tags | Categorize uploaded articles with tags | PENDING | Low |
-| O-004 | Rich Text Editor | `flutter_quill` for formatted content | PENDING | Low |
-| O-005 | Article Drafts | Save articles as drafts before publishing | PENDING | Low |
-| O-006 | Multi-Image Gallery | Upload multiple images per article | PENDING | Low |
-| O-007 | Article Sharing | Share articles via deep links or social media | PENDING | Low |
-| O-008 | Push Notifications | FCM for new article alerts | PENDING | Low |
-| O-009 | Offline Support | Read cached articles offline, queue uploads | PENDING | Low |
-| O-010 | Pagination / Infinite Scroll | Paginate article list | PENDING | Low |
-| O-011 | CI/CD Pipeline | GitHub Actions for automated testing | PENDING | Low |
+| O-001 | User Authentication | Firebase Auth with email/password sign-in, sign-up, sign-out, auth gate | DONE | Low |
+| O-002 | Article Editing | Edit previously uploaded articles — My Articles screen, edit mode in CreateArticlePage | DONE | Low |
+| O-003 | Article Categories/Tags | Optional category field on article creation with dropdown | DONE | Low |
+| O-004 | Rich Text Editor | `flutter_quill` for formatted content | DEFERRED | Low |
+| O-005 | Article Drafts | Auto-save drafts to SharedPreferences, restore on next visit | DONE | Low |
+| O-006 | Multi-Image Gallery | Upload multiple images per article | DEFERRED | Low |
+| O-007 | Article Sharing | Share article title + URL via share_plus | DONE | Low |
+| O-008 | Push Notifications | FCM for new article alerts | DEFERRED | Low |
+| O-009 | Offline Support | Connectivity detection with fallback to local cached articles | DONE | Low |
+| O-010 | Pagination / Infinite Scroll | Page/pageSize params through full stack, load-more on scroll | DONE | Low |
+| O-011 | CI/CD Pipeline | GitHub Actions for automated testing — not implemented (see note below) | DEFERRED | Low |
 | O-012 | User Research Document | JTBD analysis, competitive benchmarks, 21 sources | DONE | Medium |
 | O-013 | Product Requirements Document | PRD v2.0 with research-informed requirements | DONE | Medium |
 | O-014 | Codebase Refactoring Report | 10 issues documented with root cause analysis | DONE | Medium |
@@ -209,7 +211,9 @@
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
 | New Features (Required) | 27 | 27 | 0 | 0 | 0 |
-| Technical Improvements | 26 | 22 | 0 | 4 | 0 |
-| UI Improvements | 10 | 2 | 0 | 8 | 0 |
-| Overdelivery Features | 16 | 5 | 0 | 11 | 0 |
-| **Total** | **95** | **72** | **0** | **23** | **0** |
+| Technical Improvements | 28 | 28 | 0 | 0 | 0 |
+| UI Improvements | 10 | 10 | 0 | 0 | 0 |
+| Overdelivery Features | 16 | 12 | 0 | 0 | 4 |
+| **Total** | **97** | **93** | **0** | **0** | **4** |
+
+> **Note on deferred items**: O-004 (Rich Text Editor), O-006 (Multi-Image Gallery), and O-008 (Push Notifications) were deferred as low-ROI for the assignment scope — they would add complexity without demonstrating additional architectural skill. O-011 (CI/CD Pipeline) is not relevant for this assignment submission but would be essential in a production environment. A GitHub Actions workflow running `flutter analyze`, `flutter test`, and `flutter build apk` on every push to `main` would be the standard setup.

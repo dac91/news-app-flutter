@@ -1,16 +1,21 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:news_app_clean_architecture/core/services/draft_service.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/cubit/auth_state.dart';
+import 'package:news_app_clean_architecture/features/create_article/domain/entities/firebase_article_entity.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/create_article_cubit.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/create_article_state.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/widgets/article_text_field.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/widgets/image_picker_widget.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/widgets/submit_article_button.dart';
 
-/// Screen for creating and publishing a new article.
+/// Screen for creating and editing articles.
 ///
 /// Flow:
 /// 1. User fills in title, description, content, author fields
@@ -19,10 +24,16 @@ import 'package:news_app_clean_architecture/features/create_article/presentation
 /// 4. User taps "Publish Article" — fields + image URL are submitted to Firestore
 /// 5. On success, a confirmation is shown and user can navigate back
 ///
-/// Validation enforces field lengths matching the Firestore schema rules
-/// (see backend/docs/DB_SCHEMA.md).
+/// Supports auto-save drafts: if the user leaves the page with unsaved
+/// content, a draft is persisted to SharedPreferences. On next visit,
+/// the user is offered to restore it.
+///
+/// When [articleToEdit] is provided, the screen operates in edit mode —
+/// fields are pre-filled and submission calls [updateArticle] instead.
 class CreateArticlePage extends StatefulWidget {
-  const CreateArticlePage({Key? key}) : super(key: key);
+  final FirebaseArticleEntity? articleToEdit;
+
+  const CreateArticlePage({Key? key, this.articleToEdit}) : super(key: key);
 
   @override
   State<CreateArticlePage> createState() => _CreateArticlePageState();
@@ -34,17 +45,140 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
   final _descriptionController = TextEditingController();
   final _contentController = TextEditingController();
   final _authorController = TextEditingController();
+  final _draftService = DraftService();
 
   File? _selectedImage;
   String? _uploadedImageUrl;
+  String? _selectedCategory;
+  Timer? _autoSaveTimer;
+
+  bool get _isEditMode => widget.articleToEdit != null;
+
+  static const List<String> _categories = [
+    'General',
+    'Business',
+    'Entertainment',
+    'Health',
+    'Science',
+    'Sports',
+    'Technology',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditMode) {
+      _prefillFromArticle();
+    } else {
+      _prefillAuthorFromAuth();
+      _checkForDraft();
+    }
+    _setupAutoSave();
+  }
+
+  /// Pre-fills all fields from the article being edited.
+  void _prefillFromArticle() {
+    final article = widget.articleToEdit!;
+    _titleController.text = article.title;
+    _descriptionController.text = article.description;
+    _contentController.text = article.content;
+    _authorController.text = article.author;
+    _uploadedImageUrl = article.thumbnailUrl;
+    _selectedCategory = article.category;
+  }
 
   @override
   void dispose() {
+    _autoSaveTimer?.cancel();
+    _saveDraftIfNeeded();
     _titleController.dispose();
     _descriptionController.dispose();
     _contentController.dispose();
     _authorController.dispose();
     super.dispose();
+  }
+
+  void _setupAutoSave() {
+    // Auto-save every 10 seconds if there's content
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _saveDraftIfNeeded();
+    });
+  }
+
+  /// Pre-fills the author field with the authenticated user's display name.
+  void _prefillAuthorFromAuth() {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      final name = authState.user.displayName;
+      if (name != null && name.isNotEmpty) {
+        _authorController.text = name;
+      }
+    }
+  }
+
+  Future<void> _checkForDraft() async {
+    final draft = await _draftService.loadDraft();
+    if (draft == null || !mounted) return;
+
+    final hasContent = draft.values.any((v) => v.isNotEmpty);
+    if (!hasContent) return;
+
+    final shouldRestore = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Restore Draft?'),
+        content: const Text(
+          'You have an unsaved draft. Would you like to restore it?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+              _draftService.clearDraft();
+            },
+            child: const Text('Discard'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Restore',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldRestore == true && mounted) {
+      setState(() {
+        _titleController.text = draft['title'] ?? '';
+        _descriptionController.text = draft['description'] ?? '';
+        _contentController.text = draft['content'] ?? '';
+        _authorController.text = draft['author'] ?? '';
+        _uploadedImageUrl = draft['imageUrl'];
+      });
+    }
+  }
+
+  void _saveDraftIfNeeded() {
+    // Don't save drafts when editing an existing article
+    if (_isEditMode) return;
+
+    final hasContent = _titleController.text.isNotEmpty ||
+        _descriptionController.text.isNotEmpty ||
+        _contentController.text.isNotEmpty ||
+        _authorController.text.isNotEmpty;
+
+    if (hasContent) {
+      _draftService.saveDraft(
+        title: _titleController.text,
+        description: _descriptionController.text,
+        content: _contentController.text,
+        author: _authorController.text,
+        imageUrl: _uploadedImageUrl,
+      );
+    }
   }
 
   @override
@@ -65,10 +199,20 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         onTap: () => Navigator.pop(context),
         child: const Icon(Ionicons.chevron_back, color: Colors.black),
       ),
-      title: const Text(
-        'Create Article',
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+      title: Text(
+        _isEditMode ? 'Edit Article' : 'Create Article',
+        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
       ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.drafts_outlined),
+          tooltip: 'Save draft',
+          onPressed: () {
+            _saveDraftIfNeeded();
+            _showSnackBar('Draft saved');
+          },
+        ),
+      ],
     );
   }
 
@@ -123,6 +267,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
           maxLength: 500,
           maxLines: 3,
         ),
+        _buildCategoryDropdown(),
         ArticleTextField(
           controller: _contentController,
           label: 'Content',
@@ -139,6 +284,23 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
           textInputAction: TextInputAction.done,
         ),
       ],
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<String>(
+        value: _selectedCategory,
+        decoration: const InputDecoration(
+          labelText: 'Category (optional)',
+          border: OutlineInputBorder(),
+        ),
+        items: _categories.map((cat) {
+          return DropdownMenuItem(value: cat.toLowerCase(), child: Text(cat));
+        }).toList(),
+        onChanged: (value) => setState(() => _selectedCategory = value),
+      ),
     );
   }
 
@@ -230,13 +392,29 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       return;
     }
 
-    context.read<CreateArticleCubit>().submitArticle(
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          content: _contentController.text.trim(),
-          author: _authorController.text.trim(),
-          imageUrl: _uploadedImageUrl!,
-        );
+    final cubit = context.read<CreateArticleCubit>();
+
+    if (_isEditMode) {
+      cubit.updateArticle(
+        id: widget.articleToEdit!.id!,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        content: _contentController.text.trim(),
+        author: _authorController.text.trim(),
+        imageUrl: _uploadedImageUrl!,
+        category: _selectedCategory,
+        createdAt: widget.articleToEdit!.createdAt,
+      );
+    } else {
+      cubit.submitArticle(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        content: _contentController.text.trim(),
+        author: _authorController.text.trim(),
+        imageUrl: _uploadedImageUrl!,
+        category: _selectedCategory,
+      );
+    }
   }
 
   // --- State listener ---
@@ -250,6 +428,8 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     }
 
     if (state is CreateArticleSuccess) {
+      // Clear draft on successful publish
+      _draftService.clearDraft();
       _showSuccessDialog();
     }
 
@@ -265,29 +445,32 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
   }
 
   void _showSuccessDialog() {
+    final isEdit = _isEditMode;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 28),
-            SizedBox(width: 8),
-            Text('Published!'),
+            const Icon(Icons.check_circle, color: Colors.green, size: 28),
+            const SizedBox(width: 8),
+            Text(isEdit ? 'Updated!' : 'Published!'),
           ],
         ),
-        content: const Text(
-          'Your article has been published successfully.',
+        content: Text(
+          isEdit
+              ? 'Your article has been updated successfully.'
+              : 'Your article has been published successfully.',
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context); // close dialog
-              Navigator.pop(context); // go back to news list
+              Navigator.pop(context); // go back
             },
             child: const Text(
-              'Back to News',
+              'Done',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),

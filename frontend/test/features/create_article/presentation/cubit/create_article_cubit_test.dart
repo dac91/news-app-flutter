@@ -8,6 +8,7 @@ import 'package:news_app_clean_architecture/features/create_article/domain/entit
 import 'package:news_app_clean_architecture/features/create_article/domain/params/create_article_params.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/params/upload_article_image_params.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/usecases/create_article_usecase.dart';
+import 'package:news_app_clean_architecture/features/create_article/domain/usecases/update_article_usecase.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/usecases/upload_article_image_usecase.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/create_article_cubit.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/create_article_state.dart';
@@ -18,6 +19,8 @@ class MockUploadArticleImageUseCase extends Mock
 
 class MockCreateArticleUseCase extends Mock implements CreateArticleUseCase {}
 
+class MockUpdateArticleUseCase extends Mock implements UpdateArticleUseCase {}
+
 class MockFile extends Mock implements File {}
 
 // --- Fakes for registerFallbackValue ---
@@ -26,25 +29,32 @@ class FakeUploadArticleImageParams extends Fake
 
 class FakeCreateArticleParams extends Fake implements CreateArticleParams {}
 
+class FakeFirebaseArticleEntity extends Fake
+    implements FirebaseArticleEntity {}
+
 void main() {
   late CreateArticleCubit cubit;
   late MockUploadArticleImageUseCase mockUploadImageUseCase;
   late MockCreateArticleUseCase mockCreateArticleUseCase;
+  late MockUpdateArticleUseCase mockUpdateArticleUseCase;
   late MockFile mockFile;
 
   setUpAll(() {
     registerFallbackValue(FakeUploadArticleImageParams());
     registerFallbackValue(FakeCreateArticleParams());
+    registerFallbackValue(FakeFirebaseArticleEntity());
   });
 
   setUp(() {
     mockUploadImageUseCase = MockUploadArticleImageUseCase();
     mockCreateArticleUseCase = MockCreateArticleUseCase();
+    mockUpdateArticleUseCase = MockUpdateArticleUseCase();
     mockFile = MockFile();
 
     cubit = CreateArticleCubit(
       uploadImageUseCase: mockUploadImageUseCase,
       createArticleUseCase: mockCreateArticleUseCase,
+      updateArticleUseCase: mockUpdateArticleUseCase,
     );
   });
 
@@ -232,6 +242,111 @@ void main() {
         expect(params.content, 'Test Content');
         expect(params.author, 'Test Author');
         expect(params.thumbnailUrl, imageUrl);
+      });
+    });
+
+    group('updateArticle', () {
+      const imageUrl = 'https://storage.example.com/image.jpg';
+      final updatedArticle = FirebaseArticleEntity(
+        id: 'doc-123',
+        title: 'Updated Title',
+        description: 'Updated Description',
+        content: 'Updated Content',
+        author: 'Author',
+        thumbnailUrl: imageUrl,
+        category: 'technology',
+        createdAt: DateTime(2026, 1, 1),
+      );
+
+      test('emits [Submitting, Success] on success', () async {
+        when(() => mockUpdateArticleUseCase.call(
+              params: any(named: 'params'),
+            )).thenAnswer((_) async => DataSuccess(updatedArticle));
+
+        final states = <CreateArticleState>[];
+        final subscription = cubit.stream.listen(states.add);
+
+        await cubit.updateArticle(
+          id: 'doc-123',
+          title: 'Updated Title',
+          description: 'Updated Description',
+          content: 'Updated Content',
+          author: 'Author',
+          imageUrl: imageUrl,
+          category: 'technology',
+          createdAt: DateTime(2026, 1, 1),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(states.length, 2);
+        expect(states[0], const CreateArticleSubmitting(imageUrl: imageUrl));
+        expect(states[1], isA<CreateArticleSuccess>());
+        expect(
+            (states[1] as CreateArticleSuccess).article.title, 'Updated Title');
+
+        await subscription.cancel();
+      });
+
+      test('emits [Submitting, Error] on failure, preserves imageUrl',
+          () async {
+        const error = AppException(
+          message: 'Update failed',
+          identifier: 'updateArticle',
+        );
+
+        when(() => mockUpdateArticleUseCase.call(
+              params: any(named: 'params'),
+            )).thenAnswer((_) async => const DataFailed(error));
+
+        final states = <CreateArticleState>[];
+        final subscription = cubit.stream.listen(states.add);
+
+        await cubit.updateArticle(
+          id: 'doc-123',
+          title: 'Title',
+          description: 'Desc',
+          content: 'Content',
+          author: 'Author',
+          imageUrl: imageUrl,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(states.length, 2);
+        expect(states[0], const CreateArticleSubmitting(imageUrl: imageUrl));
+        expect(states[1], isA<CreateArticleError>());
+        expect((states[1] as CreateArticleError).imageUrl, imageUrl);
+        expect((states[1] as CreateArticleError).error.message, 'Update failed');
+
+        await subscription.cancel();
+      });
+
+      test('does nothing when updateArticleUseCase is null', () async {
+        final cubitWithoutUpdate = CreateArticleCubit(
+          uploadImageUseCase: mockUploadImageUseCase,
+          createArticleUseCase: mockCreateArticleUseCase,
+          // no updateArticleUseCase
+        );
+
+        final states = <CreateArticleState>[];
+        final subscription = cubitWithoutUpdate.stream.listen(states.add);
+
+        await cubitWithoutUpdate.updateArticle(
+          id: 'doc-123',
+          title: 'Title',
+          description: 'Desc',
+          content: 'Content',
+          author: 'Author',
+          imageUrl: imageUrl,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(states, isEmpty);
+        verifyNever(() => mockUpdateArticleUseCase.call(
+              params: any(named: 'params'),
+            ));
+
+        await subscription.cancel();
+        cubitWithoutUpdate.close();
       });
     });
 

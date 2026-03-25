@@ -12,6 +12,14 @@ abstract class FirestoreArticleDataSource {
   /// Returns the created [FirebaseArticleModel] with the server-assigned
   /// document ID and timestamp populated.
   Future<FirebaseArticleModel> createArticle(FirebaseArticleModel model);
+
+  /// Updates an existing article document in Firestore.
+  ///
+  /// Returns the updated [FirebaseArticleModel] with the latest data.
+  Future<FirebaseArticleModel> updateArticle(FirebaseArticleModel model);
+
+  /// Fetches all articles authored by the given [authorName].
+  Future<List<FirebaseArticleModel>> getArticlesByAuthor(String authorName);
 }
 
 /// Abstract interface for Cloud Storage image operations.

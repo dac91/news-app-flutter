@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:news_app_clean_architecture/core/constants/constants.dart';
 import 'package:news_app_clean_architecture/core/resources/app_exception.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
+import 'package:news_app_clean_architecture/core/services/connectivity_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/local/app_database.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/models/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
@@ -14,16 +15,44 @@ import '../data_sources/remote/news_api_service.dart';
 class ArticleRepositoryImpl implements ArticleRepository {
   final NewsApiService _newsApiService;
   final AppDatabase _appDatabase;
+  final ConnectivityService _connectivityService;
 
-  ArticleRepositoryImpl(this._newsApiService, this._appDatabase);
+  ArticleRepositoryImpl(
+    this._newsApiService,
+    this._appDatabase,
+    this._connectivityService,
+  );
 
   @override
-  Future<DataState<List<ArticleModel>>> getNewsArticles() async {
+  Future<DataState<List<ArticleModel>>> getNewsArticles({
+    String? category,
+    String? query,
+    int? page,
+    int? pageSize,
+  }) async {
+    // Offline fallback: return saved articles from local DB
+    final isOnline = await _connectivityService.isConnected;
+    if (!isOnline) {
+      final cached = await _appDatabase.articleDAO.getArticles();
+      if (cached.isNotEmpty) {
+        return DataSuccess(cached);
+      }
+      return const DataFailed(
+        AppException(
+          message: 'No internet connection and no cached articles available',
+          identifier: 'getNewsArticles.offline',
+        ),
+      );
+    }
+
     try {
       final httpResponse = await _newsApiService.getNewsArticles(
         apiKey: newsAPIKey,
-        country: countryQuery,
-        category: categoryQuery,
+        country: query != null ? null : countryQuery,
+        category: category ?? categoryQuery,
+        query: query,
+        page: page,
+        pageSize: pageSize,
       );
 
       if (httpResponse.response.statusCode == HttpStatus.ok) {

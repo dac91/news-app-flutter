@@ -67,6 +67,7 @@ void main() {
         content: 'C',
         author: 'A',
         thumbnailUrl: 'url',
+        category: 'technology',
         createdAt: now,
       );
 
@@ -77,8 +78,22 @@ void main() {
         'C',
         'A',
         'url',
+        'technology',
         now,
       ]);
+    });
+
+    test('category is nullable and defaults to null', () {
+      const entity = FirebaseArticleEntity(
+        id: '1',
+        title: 'Title',
+        description: 'Desc',
+        content: 'Content',
+        author: 'Author',
+        thumbnailUrl: 'https://example.com/img.jpg',
+      );
+
+      expect(entity.category, isNull);
     });
   });
 }

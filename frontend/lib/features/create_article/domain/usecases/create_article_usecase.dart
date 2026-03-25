@@ -26,6 +26,7 @@ class CreateArticleUseCase
         content: params.content,
         author: params.author,
         thumbnailUrl: params.thumbnailUrl,
+        category: params.category,
       ),
     );
   }

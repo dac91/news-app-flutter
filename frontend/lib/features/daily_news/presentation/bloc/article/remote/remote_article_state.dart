@@ -17,8 +17,34 @@ class RemoteArticlesLoading extends RemoteArticlesState {
 }
 
 class RemoteArticlesDone extends RemoteArticlesState {
-  const RemoteArticlesDone(List<ArticleEntity> articles)
-      : super(articles: articles);
+  final int currentPage;
+  final bool hasReachedMax;
+  final bool isLoadingMore;
+
+  const RemoteArticlesDone(
+    List<ArticleEntity> articles, {
+    this.currentPage = 1,
+    this.hasReachedMax = false,
+    this.isLoadingMore = false,
+  }) : super(articles: articles);
+
+  RemoteArticlesDone copyWith({
+    List<ArticleEntity>? articles,
+    int? currentPage,
+    bool? hasReachedMax,
+    bool? isLoadingMore,
+  }) {
+    return RemoteArticlesDone(
+      articles ?? this.articles ?? [],
+      currentPage: currentPage ?? this.currentPage,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+
+  @override
+  List<Object?> get props =>
+      [articles, currentPage, hasReachedMax, isLoadingMore];
 }
 
 class RemoteArticlesError extends RemoteArticlesState {

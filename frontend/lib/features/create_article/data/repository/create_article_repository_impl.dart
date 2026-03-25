@@ -53,4 +53,40 @@ class CreateArticleRepositoryImpl implements CreateArticleRepository {
       );
     }
   }
+
+  @override
+  Future<DataState<FirebaseArticleEntity>> updateArticle(
+    FirebaseArticleEntity article,
+  ) async {
+    try {
+      final model = FirebaseArticleModel.fromEntity(article);
+      final updatedModel = await _firestoreDataSource.updateArticle(model);
+      return DataSuccess(updatedModel.toEntity());
+    } catch (e) {
+      return DataFailed(
+        AppException(
+          message: e.toString(),
+          identifier: 'updateArticle',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByAuthor(
+    String authorName,
+  ) async {
+    try {
+      final models =
+          await _firestoreDataSource.getArticlesByAuthor(authorName);
+      return DataSuccess(models.map((m) => m.toEntity()).toList());
+    } catch (e) {
+      return DataFailed(
+        AppException(
+          message: e.toString(),
+          identifier: 'getArticlesByAuthor',
+        ),
+      );
+    }
+  }
 }

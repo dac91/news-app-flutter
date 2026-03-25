@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../../core/constants/constants.dart';
 import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
@@ -34,6 +35,15 @@ class ArticleDetailsView extends HookWidget {
           child: const Icon(Ionicons.chevron_back, color: Colors.black),
         ),
       ),
+      actions: [
+        Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: 'Share article',
+            onPressed: () => _onSharePressed(context),
+          ),
+        ),
+      ],
     );
   }
 
@@ -139,5 +149,13 @@ class ArticleDetailsView extends HookWidget {
         content: Text('Article saved successfully.'),
       ),
     );
+  }
+
+  void _onSharePressed(BuildContext context) {
+    final title = article?.title ?? 'Check out this article';
+    final url = article?.url ?? '';
+    final shareText =
+        url.isNotEmpty ? '$title\n\n$url' : title;
+    Share.share(shareText, subject: title);
   }
 }
