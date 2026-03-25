@@ -59,7 +59,7 @@
 | N-004 | Firestore Schema Implementation | Firestore enabled (nam5 region), collections ready | DONE | High |
 | N-005 | Firestore Security Rules | Field presence, type, length validation, server timestamp enforcement deployed | DONE | High |
 | N-006 | Cloud Storage Rules | Rules deployed for `media/articles/` path (image/*, 5MB max) | DONE | High |
-| N-007 | Firebase Emulator Configuration | Not yet configured | PENDING | Medium |
+| N-007 | Firebase Emulator Configuration | Configured in `firebase.json` (Firestore:8080, Storage:9199, UI:4000), documented in `backend/docs/EMULATOR_SETUP.md` | DONE | Medium |
 
 ### 2.2 Frontend — Domain Layer
 
@@ -138,7 +138,7 @@
 | T-013 | Implement `toEntity()` on Models | Added `toEntity()` to `ArticleModel` | DONE | Medium | `data/models/article.dart` |
 | T-014 | Rename `pages` to `screens` | Architecture doc specifies `screens` folder | PENDING | Low | `presentation/pages/` |
 | T-015 | Add `shared` Folder | Architecture doc specifies a `shared` folder | PENDING | Low | `lib/` |
-| T-016 | Create Proper Params Classes | Created for new feature; existing daily_news not updated | PARTIAL | Medium | New: `domain/params/` |
+| T-016 | Fix Force-Unwrap in Use Case Params | Replaced `params!` with `ArgumentError.notNull` guard in `save_article.dart` and `remove_article.dart` | DONE | Medium | `domain/usecases/save_article.dart`, `domain/usecases/remove_article.dart` |
 
 ### 3.5 Code Quality Improvements
 
@@ -147,7 +147,7 @@
 | T-017 | Use ListView.builder | Replaced eager ListView with lazy ListView.builder | DONE | Medium | `pages/home/daily_news.dart` |
 | T-018 | Add `const` Constructors | Added const constructors to article_tile widgets | DONE | Low | `widgets/article_tile.dart` |
 | T-019 | Add Return Type Annotations | Added `PreferredSizeWidget` and `Widget` return types | DONE | Low | `pages/home/daily_news.dart` |
-| T-020 | Remove Unused `intl` Import | Not yet addressed | PENDING | Low | `pubspec.yaml` |
+| T-020 | Remove Unused `intl` Dependency | Removed `intl` package from `pubspec.yaml` (zero usages in `lib/`) | DONE | Low | `pubspec.yaml` |
 
 ### 3.6 Testing
 
@@ -162,11 +162,11 @@
 
 ---
 
-## 4. UI Improvements -- PENDING
+## 4. UI Improvements
 
 | # | Improvement | Description | Status | Priority |
 |---|------------|-------------|--------|----------|
-| U-001 | Pull-to-Refresh | Add pull-to-refresh on home page | PENDING | Medium |
+| U-001 | Pull-to-Refresh | Added `RefreshIndicator` wrapping `ListView.builder` on home page | DONE | Medium |
 | U-002 | Shimmer Loading | Replace activity indicator with skeleton loading | PENDING | Low |
 | U-003 | Category Filters | Add horizontal chip bar for categories | PENDING | Low |
 | U-004 | Search Functionality | Add search bar in AppBar | PENDING | Low |
@@ -175,7 +175,7 @@
 | U-007 | Dark Mode Support | Add dark theme variant | PENDING | Low |
 | U-008 | Bottom Navigation | Add bottom nav for Home / Saved / Create | PENDING | Low |
 | U-009 | Splash Screen | Implement proper splash screen | PENDING | Low |
-| U-010 | Error Retry on Home | Make error icon tappable to retry | PENDING | Medium |
+| U-010 | Error Retry on Home | Made error icon tappable with `GestureDetector`, shows "Tap to retry" text, dispatches `GetArticles` | DONE | Medium |
 
 ---
 
@@ -208,8 +208,8 @@
 |----------|-------|------|---------|---------|----------|
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
-| New Features (Required) | 27 | 26 | 0 | 1 | 0 |
-| Technical Improvements | 26 | 20 | 1 | 5 | 0 |
-| UI Improvements | 10 | 0 | 0 | 10 | 0 |
+| New Features (Required) | 27 | 27 | 0 | 0 | 0 |
+| Technical Improvements | 26 | 22 | 0 | 4 | 0 |
+| UI Improvements | 10 | 2 | 0 | 8 | 0 |
 | Overdelivery Features | 16 | 5 | 0 | 11 | 0 |
-| **Total** | **95** | **67** | **1** | **27** | **0** |
+| **Total** | **95** | **72** | **0** | **23** | **0** |

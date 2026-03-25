@@ -183,6 +183,26 @@ create_article/
 **Functionality**: Replaced all force-unwrap (`!`) operators on nullable fields across `article_tile.dart`, `article_detail.dart`, and `daily_news.dart` with null-safe alternatives (`?.`, `?? ''`, `?? kDefaultImage`, `?? false`, `?? []`). Added `errorBuilder` to `Image.network` in article detail for graceful image failure handling. Added missing return type annotations.
 **Purpose**: Every `!` on a nullable `ArticleEntity` field was a latent crash — if any API article had a null `title`, `urlToImage`, or `publishedAt`, the app would throw `Null check operator used on a null value` at runtime. The NewsAPI frequently returns articles with null fields, making these real production crashes, not theoretical risks.
 
+#### j. Pull-to-Refresh on Home Page
+**Functionality**: Wrapped `ListView.builder` in a `RefreshIndicator` in `daily_news.dart`. Pulling down dispatches `GetArticles` event to refresh the article feed from the API.
+**Purpose**: Pull-to-refresh is a baseline mobile UX pattern. Users expect to be able to refresh content manually, especially on a news feed where freshness matters.
+
+#### k. Error Retry via Tap on Home Page
+**Functionality**: Made the error state in the home page tappable — wrapped the error icon in a `GestureDetector` with "Something went wrong" and "Tap to retry" text, which dispatches `GetArticles` to retry the failed fetch.
+**Purpose**: A dead-end error screen with no way to retry forces the user to kill and relaunch the app. Tappable retry is the minimum acceptable error UX.
+
+#### l. Use Case Null Safety Guards
+**Functionality**: Replaced `params!` force-unwrap in `save_article.dart` and `remove_article.dart` with explicit `ArgumentError.notNull('params')` guards at the top of the `call()` method.
+**Purpose**: The `UseCase` base class defines `params` as nullable (`Params?`), so every subclass was force-unwrapping it — a runtime crash waiting to happen. Explicit null guards provide a clear error message instead of a generic null-check exception.
+
+#### m. Removed Unused `intl` Dependency
+**Functionality**: Removed the `intl` package from `pubspec.yaml`. A grep of `lib/` showed zero imports of the package.
+**Purpose**: Dead dependencies increase install size, create potential version conflicts, and violate the principle of keeping dependencies minimal. The Boy Scout Rule applies to `pubspec.yaml` too.
+
+#### n. Firebase Emulator Documentation
+**Functionality**: Created `backend/docs/EMULATOR_SETUP.md` documenting the full Firebase Emulator Suite configuration — Firestore on port 8080, Storage on port 9199, Emulator UI on port 4000 — with setup instructions, start commands, and usage notes. Updated `backend/firebase.json` with explicit UI port configuration.
+**Purpose**: Other developers (or the hiring team reviewing this project) should be able to run the Firebase backend locally without needing a production Firebase project or a credit card. The emulator suite enables offline development and local testing.
+
 ### 2. Prototypes Created
 
 #### a. DB Schema Documentation
@@ -217,8 +237,9 @@ create_article/
 | `8307400` | feat: add data layer for article creation with tests (23/23 passing) |
 | `4556001` | feat: add presentation layer, DI wiring, and routing for article creation (34/34 tests passing) |
 | `5878141` | docs: add project report and update feature tracking |
-| *(latest)* | fix: security hardening, widget tests, error handling, and polish (55/55 tests passing) |
-| *(latest)* | fix: null safety hardening — remove all force-unwrap operators from existing UI (55/55 tests, 0 analyze issues) |
+| `074c284` | fix: security hardening, widget tests, error handling, and polish (55/55 tests passing) |
+| `e869eac` | fix: null safety hardening — remove all force-unwrap operators from existing UI (55/55 tests, 0 analyze issues) |
+| *(latest)* | fix: pull-to-refresh, error retry, use case null guards, remove unused intl, emulator docs (55/55 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
@@ -234,9 +255,10 @@ create_article/
 ### Metrics
 - **Total tests**: 55 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings, 0 infos (completely clean)
-- **New files created**: 20 (7 production, 9 test, 4 documentation)
-- **Existing files modified**: 16 (bug fixes, null safety, security hardening, error handling, DI registration, routing)
+- **New files created**: 21 (7 production, 9 test, 5 documentation)
+- **Existing files modified**: 19 (bug fixes, null safety, security hardening, error handling, DI registration, routing, pull-to-refresh, error retry)
 - **Architecture violations fixed**: 6 (in existing code)
-- **Null safety fixes**: 3 files with force-unwrap operators replaced with safe alternatives
+- **Null safety fixes**: 5 files with force-unwrap operators replaced with safe alternatives
 - **Security fixes**: 1 (API key moved out of source control)
-- **Documentation pages created**: 6 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`)
+- **Documentation pages created**: 7 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`)
+- **Feature tracking**: 72 of 95 items complete (76%), 0 partial, 23 pending (all low priority)
