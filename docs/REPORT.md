@@ -158,20 +158,20 @@ create_article/                   ai_insight/
 ```
 
 ### Test Coverage
-180 tests across all layers — all passing:
+185 tests across all layers — all passing:
 - **Auth Domain**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data**: 5 tests (model conversion, Firebase user mapping, equality)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
 - **Create Article Domain**: 12 tests (create/upload/update/getByAuthor use cases)
 - **Create Article Data**: 13 tests (model serialization, repository success/failure, entity-model conversion)
 - **Create Article Presentation — Cubit**: 17 tests (state transitions for create/update/upload/reset, error handling, null use case guard)
-- **Create Article Presentation — Widgets**: 21 tests (ArticleTextField: 7, ImagePickerWidget: 7, SubmitArticleButton: 7)
+- **Create Article Presentation — Widgets**: 23 tests (ArticleTextField: 9 incl. readOnly, ImagePickerWidget: 7, SubmitArticleButton: 7)
 - **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty author guard)
 - **Daily News Domain**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
 - **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
-- **AI Insight Domain**: 17 tests (entity equality/props: 4, params equality/cacheKey: 9, use case success/failure/null-guard: 4)
-- **AI Insight Data**: 22 tests (model fromJson/toJson/fromEntity/toEntity/equality: 12, repository cache-hit/miss/resilience: 10)
-- **AI Insight Presentation**: 11 tests (cubit initial state, success/error/exception flows, param passing, state equality: 11)
+- **AI Insight Domain**: 19 tests (entity equality/props: 5, params equality/cacheKey: 10, use case success/failure/null-guard: 4)
+- **AI Insight Data**: 24 tests (model fromJson/toJson/fromEntity/toEntity/equality: 14, repository cache-hit/miss/resilience: 10)
+- **AI Insight Presentation**: 12 tests (cubit initial state, success/error/exception flows, param passing, state equality: 12)
 
 ## 6. Overdelivery
 
@@ -208,7 +208,7 @@ create_article/                   ai_insight/
 **Purpose**: The original code had no error handling for local database operations — any Floor exception would crash silently. Users now see a clear error message and can retry.
 
 #### h. Comprehensive Widget Tests
-**Functionality**: 21 widget tests covering all 3 reusable presentation widgets.
+**Functionality**: 23 widget tests covering all 3 reusable presentation widgets (including readOnly mode tests for ArticleTextField).
 **Purpose**: Widget tests verify that the UI layer renders correctly and responds to user interaction.
 
 #### i. Null Safety Hardening Across Existing UI
@@ -314,13 +314,13 @@ create_article/                   ai_insight/
 
 #### ee. AI Insight — Perspective Context (O-017)
 **Functionality**: Gemini-powered article analysis available in the article detail view. Full clean architecture implementation:
-- **Domain**: `AiInsightEntity`, `GetInsightParams` (with URL-hash cache key), `AiInsightRepository` (abstract), `GetArticleInsightUseCase`
-- **Data**: `AiInsightModel` (fromJson/toJson/toEntity/fromEntity), `GeminiDataSource` + `InsightCacheDataSource` (abstract interfaces), `GeminiDataSourceImpl` (structured prompt + JSON parsing), `FirestoreInsightCacheImpl` (cache in `ai_insights` collection), `AiInsightRepositoryImpl` (cache-first: Firestore → Gemini → cache → return)
-- **Presentation**: `AiInsightCubit` + 4 states (Initial/Loading/Loaded/Error), `AiInsightPanel` (collapsible card with tone badge, summary bullets, expandable sections, AI disclaimer)
+- **Domain**: `AiInsightEntity` (6 fields including `politicalLeaning`), `GetInsightParams` (with URL-hash cache key), `AiInsightRepository` (abstract), `GetArticleInsightUseCase`
+- **Data**: `AiInsightModel extends AiInsightEntity` (fromJson/toJson/toEntity/fromEntity), `GeminiDataSource` + `InsightCacheDataSource` (abstract interfaces), `GeminiDataSourceImpl` (structured prompt requesting summary, tone, political leaning, source context, emphasis analysis + JSON parsing), `FirestoreInsightCacheImpl` (cache in `ai_insights` collection), `AiInsightRepositoryImpl` (cache-first: Firestore → Gemini → cache → return)
+- **Presentation**: `AiInsightCubit` + 4 states (Initial/Loading/Loaded/Error), `AiInsightPanel` (collapsible card with tone badge, political leaning badge, summary bullets, "Read original article" link, expandable sections, AI disclaimer)
 - **Integration**: `MultiBlocProvider` in article detail, DI registrations in `injection_container.dart`
-- **Tests**: 50 tests across entity (4), params (9), model (12), use case (4), repository (10), cubit (11)
+- **Tests**: 53 tests across entity (5), params (10), model (14), use case (4), repository (10), cubit (12)
 
-**Purpose**: Addresses the trust crisis in news (58% worry about fake news — Reuters DNR 2025). Turns NewsAPI's content truncation limitation into a feature. Framed as "Perspective Context" (not fact-checking) to avoid truth-arbiter backlash based on Grok/X research showing 54.5% agreement rate with human fact-checkers.
+**Purpose**: Addresses the trust crisis in news (58% worry about fake news — Reuters DNR 2025). Turns NewsAPI's content truncation limitation into a feature. Framed as "Perspective Context" (not fact-checking) to avoid truth-arbiter backlash based on Grok/X research showing 54.5% agreement rate with human fact-checkers. Political leaning analysis per-article satisfies a specific user demand: *"Say where the information is from and the political view of the author"* (Female, 21, UK — Reuters DNR 2025).
 
 **Research-backed design decisions**:
 - Lazy-loaded (user taps button) — respects user agency
@@ -372,6 +372,10 @@ create_article/                   ai_insight/
 | `84337c9` | fix: compliance fixes, daily_news tests, audit rewrite (130/130 tests, 0 analyze issues) |
 | `6f320f0` | docs: add AI Insight research — trust crisis data, Grok/X lessons, perspective context approach, 13 new sources |
 | `17186e5` | feat: add AI Insight feature — Gemini-powered perspective context with Firestore caching (177/177 tests, 0 analyze issues) |
+| `9e3a061` | style: redesign article detail (hero image), saved articles (swipe-to-remove), AI insight (one-click bottom sheet) (180/180 tests) |
+| `3733b80` | feat: add politicalLeaning field to AI Insight + fix light theme contrast (183/183 tests) |
+| `56f7c6f` | fix: make author field read-only to prevent impersonation (185/185 tests) |
+| `f58166f` | fix: resolve compliance audit flags — model inheritance, dead deps, font assets (185/185 tests) |
 
 ### Architecture Decisions Record
 
@@ -389,18 +393,18 @@ create_article/                   ai_insight/
 | Debounced search (500ms) | Prevents API calls on every keystroke while feeling responsive; standard UX pattern |
 | connectivity_plus for offline | Lightweight check before API calls; degrades to cached articles instead of showing error |
 | Gemini 2.0 Flash | Free tier (15 RPM); sufficient quality for summarization; structured JSON output support |
-| Perspective Context (not fact-check) | Avoids truth-arbiter role; 42% trust less after AI disclosure; Grok agrees with fact-checkers only 54.5% |
+| Perspective Context (not fact-check) | Avoids truth-arbiter role; 42% trust less after AI disclosure; Grok agrees with fact-checkers only 54.5%; per-article political leaning satisfies user demand (Reuters DNR 2025) |
 | Lazy AI loading (button trigger) | Respects user agency; avoids unnecessary API calls; keeps load time zero for non-AI users |
 | Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 180 (all passing)
+- **Total tests**: 185 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 60+ (production code, tests, documentation)
-- **Features implemented**: 118 of 122 tracked items (97%)
-- **Architecture violations fixed**: 6 (in existing code) + 6 compliance fixes
+- **Features implemented**: 123 of 127 tracked items (97%)
+- **Architecture violations fixed**: 6 (in existing code) + 9 compliance fixes
 - **Null safety fixes**: 5 files with force-unwrap operators replaced with safe alternatives
-- **Security fixes**: 2 (NewsAPI key + Gemini API key moved out of source control via `--dart-define`)
+- **Security fixes**: 3 (NewsAPI key + Gemini API key moved out of source control via `--dart-define`, author field impersonation prevention)
 - **Documentation pages created**: 8 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`)
-- **Feature tracking**: 118 of 122 items complete (97%), 4 deferred (low priority / out of scope)
+- **Feature tracking**: 123 of 127 items complete (97%), 4 deferred (low priority / out of scope)
 - **External APIs integrated**: 3 (NewsAPI, Firebase, Google Gemini)

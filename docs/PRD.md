@@ -2,7 +2,7 @@
 
 ## Journalist News App - Symmetry Assignment
 
-**Document Version:** 3.0  
+**Document Version:** 3.1  
 **Date:** 2026-03-26  
 **Author:** Diego  
 **Status:** Research-Informed Draft  
@@ -132,12 +132,12 @@ Deliver a fully functional, well-architected Flutter application that:
 
 ### FR-5: AI Insight — Perspective Context (New — Overdelivery)
 - **FR-5.1:** User can request an AI-generated insight for any article from the detail view
-- **FR-5.2:** Insight includes: 3-5 key fact summary bullets, tone classification with explanation, source context, and emphasis analysis
+- **FR-5.2:** Insight includes: 3-5 key fact summary bullets, tone classification with explanation, political leaning of the article's perspective, source context, and emphasis analysis
 - **FR-5.3:** Insights generated via Google Gemini API (`gemini-2.0-flash` model) with structured JSON prompt
 - **FR-5.4:** Results cached in Firestore `ai_insights` collection (keyed by URL hash) for deduplication
 - **FR-5.5:** Cache-first strategy: check Firestore → on miss, call Gemini → cache result → return
 - **FR-5.6:** Lazy-loaded: only triggered when user taps "Get AI Insight" button (no automatic API calls)
-- **FR-5.7:** Collapsible card UI with tone badge (color-coded), summary bullets (always visible when loaded), and expandable sections for tone explanation, source context, and emphasis analysis
+- **FR-5.7:** Collapsible card UI with tone badge (color-coded), political leaning badge, summary bullets (always visible when loaded), "Read original article" link, and expandable sections for tone explanation, source context, and emphasis analysis
 - **FR-5.8:** Always displays "AI-generated, verify independently" disclaimer
 - **FR-5.9:** Graceful error handling: error state with user-friendly message, no crash on API failure
 - **FR-5.10:** Gemini API key secured via `--dart-define=GEMINI_API_KEY=...` (same pattern as NewsAPI key)
@@ -352,7 +352,9 @@ Article Detail → Scroll down → See "Get AI Insight" button
       → Cache MISS → Call Gemini API → Parse JSON → Cache in Firestore → emit Loaded
     → Loaded: Collapsible card appears:
       → Tone badge (color-coded: neutral=blue, critical=orange, alarming=red, etc.)
+      → Political leaning badge (left/center-left/center/center-right/right)
       → 3-5 Summary bullet points (always visible)
+      → "Read original article" link (opens source URL)
       → Expandable sections: Tone Explanation, Source Context, Emphasis Analysis
       → "AI-generated, verify independently" disclaimer
     → Error → User-friendly message with retry option
@@ -434,7 +436,7 @@ Article Detail → Scroll down → See "Get AI Insight" button
 | Navigation to create | FAB on home screen | Bottom nav tab, drawer menu | Assignment specifies FAB; Material Design standard for primary creation action. |
 | Validation style | Inline, real-time, field-level | Submit-then-validate | Inline validation yields 25% higher completion rates (Material Design guidelines). |
 | Error messages | Plain language + recovery action | Technical error codes | "Your cover photo couldn't be uploaded. Check your connection." > "Storage Error 403" |
-| AI framing | "Perspective Context" — tone/emphasis/source analysis | Binary "fact-check" (true/false) | 42% trust stories *less* after AI disclosure (transparency paradox). Framing as context/perspective avoids truth-arbiter backlash (see Grok's 54.5% agreement rate). Data: Reuters DNR 2025, WEF 2024, Trusting News 2025. |
+| AI framing | "Perspective Context" — tone/political leaning/emphasis/source analysis | Binary "fact-check" (true/false) | 42% trust stories *less* after AI disclosure (transparency paradox). Framing as context/perspective avoids truth-arbiter backlash (see Grok's 54.5% agreement rate). Political leaning per-article satisfies user demand: "Say where the information is from and the political view of the author" — Reuters DNR 2025. Data: Reuters DNR 2025, WEF 2024, Trusting News 2025. |
 | AI model | Gemini 2.0 Flash (free tier, 15 RPM) | GPT-4, Claude | Free tier for assignment scope; structured JSON output; sufficient quality for summarization. |
 | AI caching | Firestore `ai_insights` collection | No caching / in-memory | Identical articles produce identical insights; caching avoids redundant API calls and stays within free tier limits. |
 | AI trigger | Lazy (user taps button) | Automatic on article open | Respects user agency; avoids unnecessary API calls; keeps loading time zero for users who don't want AI. |
@@ -445,7 +447,7 @@ Article Detail → Scroll down → See "Get AI Insight" button
 
 - [ASSIGNMENT_REQUIREMENTS.md](./ASSIGNMENT_REQUIREMENTS.md) — Full assignment deliverables breakdown
 - [USER_RESEARCH.md](./USER_RESEARCH.md) — JTBD, personas, competitive analysis, assumptions, priority matrix
-- [FEATURE_TRACKING.md](./FEATURE_TRACKING.md) — 87-item feature tracker
+- [FEATURE_TRACKING.md](./FEATURE_TRACKING.md) — 127-item feature tracker
 - [APP_ARCHITECTURE.md](./APP_ARCHITECTURE.md) — Symmetry's architecture spec
 - [ARCHITECTURE_VIOLATIONS.md](./ARCHITECTURE_VIOLATIONS.md) — 50 violations to avoid
 - [CODING_GUIDELINES.md](./CODING_GUIDELINES.md) — 6 coding rules
