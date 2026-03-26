@@ -1,26 +1,25 @@
-import 'package:equatable/equatable.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/domain/entities/ai_insight_entity.dart';
 
 /// Data model for AI insights with serialization support.
 ///
 /// Extends [AiInsightEntity] to add JSON serialization for Firestore
 /// caching and Gemini API response parsing.
-class AiInsightModel extends Equatable {
-  final List<String> summaryBullets;
-  final String tone;
-  final String toneExplanation;
-  final String politicalLeaning;
-  final String sourceContext;
-  final String emphasisAnalysis;
-
+class AiInsightModel extends AiInsightEntity {
   const AiInsightModel({
-    required this.summaryBullets,
-    required this.tone,
-    required this.toneExplanation,
-    required this.politicalLeaning,
-    required this.sourceContext,
-    required this.emphasisAnalysis,
-  });
+    required List<String> summaryBullets,
+    required String tone,
+    required String toneExplanation,
+    required String politicalLeaning,
+    required String sourceContext,
+    required String emphasisAnalysis,
+  }) : super(
+          summaryBullets: summaryBullets,
+          tone: tone,
+          toneExplanation: toneExplanation,
+          politicalLeaning: politicalLeaning,
+          sourceContext: sourceContext,
+          emphasisAnalysis: emphasisAnalysis,
+        );
 
   /// Creates an [AiInsightModel] from a JSON map (Firestore or parsed API).
   factory AiInsightModel.fromJson(Map<String, dynamic> json) {
@@ -72,14 +71,4 @@ class AiInsightModel extends Equatable {
       emphasisAnalysis: emphasisAnalysis,
     );
   }
-
-  @override
-  List<Object?> get props => [
-        summaryBullets,
-        tone,
-        toneExplanation,
-        politicalLeaning,
-        sourceContext,
-        emphasisAnalysis,
-      ];
 }
