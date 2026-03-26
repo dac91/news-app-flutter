@@ -45,6 +45,7 @@ class CategoryChipBar extends StatelessWidget {
           return ChoiceChip(
             label: Text(_capitalize(category)),
             selected: isSelected,
+            showCheckmark: false,
             onSelected: (_) {
               if (category == 'general') {
                 onCategorySelected(null);
