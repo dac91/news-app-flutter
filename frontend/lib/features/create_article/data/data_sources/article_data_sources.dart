@@ -20,6 +20,10 @@ abstract class FirestoreArticleDataSource {
 
   /// Fetches all articles owned by the given [ownerUid].
   Future<List<FirebaseArticleModel>> getArticlesByOwner(String ownerUid);
+
+  /// Fetches all community-published articles, ordered by creation date
+  /// (newest first).
+  Future<List<FirebaseArticleModel>> getAllArticles();
 }
 
 /// Abstract interface for Cloud Storage image operations.

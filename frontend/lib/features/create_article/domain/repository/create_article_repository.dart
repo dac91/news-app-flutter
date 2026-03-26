@@ -24,4 +24,7 @@ abstract class CreateArticleRepository {
   Future<DataState<List<FirebaseArticleEntity>>> getArticlesByOwner(
     String ownerUid,
   );
+
+  /// Fetches all community-published articles (newest first).
+  Future<DataState<List<FirebaseArticleEntity>>> getAllArticles();
 }

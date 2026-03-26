@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/core/resources/app_exception.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
+import 'package:news_app_clean_architecture/features/create_article/domain/entities/firebase_article_entity.dart';
+import 'package:news_app_clean_architecture/features/create_article/domain/usecases/get_community_articles_usecase.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
@@ -12,12 +14,13 @@ const int _kPageSize = 20;
 class RemoteArticlesBloc
     extends Bloc<RemoteArticlesEvent, RemoteArticlesState> {
   final GetArticleUseCase _getArticleUseCase;
+  final GetCommunityArticlesUseCase _getCommunityArticlesUseCase;
 
   /// Tracks the last query parameters for "load more" requests.
   String? _lastCategory;
   String? _lastQuery;
 
-  RemoteArticlesBloc(this._getArticleUseCase)
+  RemoteArticlesBloc(this._getArticleUseCase, this._getCommunityArticlesUseCase)
       : super(const RemoteArticlesLoading()) {
     on<GetArticles>(onGetArticles);
     on<LoadMoreArticles>(_onLoadMore);
@@ -30,27 +33,47 @@ class RemoteArticlesBloc
     _lastCategory = event.category;
     _lastQuery = event.query;
 
-    final dataState = await _getArticleUseCase(
-      params: GetArticleParams(
-        category: event.category,
-        query: event.query,
-        page: 1,
-        pageSize: _kPageSize,
+    // Fetch NewsAPI and community articles in parallel.
+    final results = await Future.wait([
+      _getArticleUseCase(
+        params: GetArticleParams(
+          category: event.category,
+          query: event.query,
+          page: 1,
+          pageSize: _kPageSize,
+        ),
       ),
-    );
+      _getCommunityArticlesUseCase(),
+    ]);
 
-    if (dataState is DataSuccess) {
-      final articles = dataState.data ?? [];
+    final newsApiResult = results[0] as DataState<List<ArticleEntity>>;
+    final communityResult =
+        results[1] as DataState<List<FirebaseArticleEntity>>;
+
+    if (newsApiResult is DataSuccess) {
+      final newsArticles = newsApiResult.data ?? [];
+
+      // Convert community articles to ArticleEntity and merge.
+      // Community articles are best-effort: if the fetch fails, we
+      // still show NewsAPI articles without error.
+      final communityArticles = communityResult is DataSuccess
+          ? (communityResult.data ?? [])
+              .map(_communityToArticleEntity)
+              .toList()
+          : <ArticleEntity>[];
+
+      final merged = _mergeByDate(newsArticles, communityArticles);
+
       emit(RemoteArticlesDone(
-        articles,
+        merged,
         currentPage: 1,
-        hasReachedMax: articles.length < _kPageSize,
+        hasReachedMax: newsArticles.length < _kPageSize,
       ));
     }
 
-    if (dataState is DataFailed) {
+    if (newsApiResult is DataFailed) {
       emit(RemoteArticlesError(
-        dataState.error ??
+        newsApiResult.error ??
             const AppException(
               message: 'Unknown error occurred',
               identifier: 'getArticles',
@@ -79,7 +102,10 @@ class RemoteArticlesBloc
 
     if (dataState is DataSuccess) {
       final newArticles = dataState.data ?? <ArticleEntity>[];
-      final allArticles = <ArticleEntity>[...(currentState.articles ?? []), ...newArticles];
+      final allArticles = <ArticleEntity>[
+        ...(currentState.articles ?? []),
+        ...newArticles
+      ];
       emit(RemoteArticlesDone(
         allArticles,
         currentPage: nextPage,
@@ -91,5 +117,41 @@ class RemoteArticlesBloc
       // On load-more failure, revert to previous state without isLoadingMore
       emit(currentState.copyWith(isLoadingMore: false));
     }
+  }
+
+  /// Converts a [FirebaseArticleEntity] to an [ArticleEntity] so it can be
+  /// displayed in the same feed as NewsAPI articles.
+  static ArticleEntity _communityToArticleEntity(
+    FirebaseArticleEntity firebase,
+  ) {
+    return ArticleEntity(
+      id: firebase.id.hashCode,
+      author: firebase.author,
+      title: firebase.title,
+      description: firebase.description,
+      url: null,
+      urlToImage: firebase.thumbnailUrl,
+      publishedAt: firebase.createdAt?.toIso8601String(),
+      content: firebase.content,
+    );
+  }
+
+  /// Merges two lists of articles by [publishedAt] date (newest first).
+  ///
+  /// Articles without a valid date are appended at the end.
+  static List<ArticleEntity> _mergeByDate(
+    List<ArticleEntity> newsApi,
+    List<ArticleEntity> community,
+  ) {
+    final all = [...newsApi, ...community];
+    all.sort((a, b) {
+      final aDate = DateTime.tryParse(a.publishedAt ?? '');
+      final bDate = DateTime.tryParse(b.publishedAt ?? '');
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1;
+      if (bDate == null) return -1;
+      return bDate.compareTo(aDate); // newest first
+    });
+    return all;
   }
 }

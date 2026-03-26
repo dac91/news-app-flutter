@@ -147,7 +147,7 @@ Testing wasn't an afterthought — it was part of the workflow from the start:
 - Every commit includes the test count in the commit message (e.g., `242/242 tests, 0 analyze issues`)
 - `flutter analyze` was run on every commit — 0 errors, 0 warnings throughout
 - Real device testing on Android emulator (API 30) for every user-facing change
-- The final suite: **242 unit tests across 36 test files, all passing**
+- The final suite: **251 unit tests across 38 test files, all passing**
 
 ## 3. Challenges Faced
 
@@ -192,7 +192,7 @@ Testing wasn't an afterthought — it was part of the workflow from the start:
 
 ### What This Process Proved
 
-A product manager who understands engineering logic can orchestrate AI to ship production-quality software — 60+ files, 242 tests, clean architecture, Firebase backend, three external API integrations — with the same rigor as a traditional engineering team.
+A product manager who understands engineering logic can orchestrate AI to ship production-quality software — 60+ files, 251 tests, clean architecture, Firebase backend, three external API integrations — with the same rigor as a traditional engineering team.
 
 But this isn't about replacing engineers. It's about a new role emerging: the **AI Product Builder** — someone who combines product thinking (what to build), engineering literacy (how it should be built), and AI orchestration (directing AI to build it). This assignment let me exercise all three.
 
@@ -224,11 +224,10 @@ I believe in transparency, so here's what didn't work perfectly:
 ### Future Directions
 
 1. **Rich Text Editor**: Replace plain text content with `flutter_quill` for formatted article creation
-2. **Article Feed Integration**: Merge Firestore articles into the main news feed alongside NewsAPI articles
-3. **CI/CD Pipeline**: GitHub Actions for automated `flutter analyze`, `flutter test`, and `flutter build apk` on every push
-4. **Integration Tests**: End-to-end tests using `integration_test` for the full create-to-Firestore flow
-5. **AI Insight Improvements**: User feedback mechanism (thumbs up/down), accuracy tracking over time, A/B test different prompt strategies
-6. **Push Notifications**: FCM for new articles from followed authors
+2. **CI/CD Pipeline**: GitHub Actions for automated `flutter analyze`, `flutter test`, and `flutter build apk` on every push
+3. **Integration Tests**: End-to-end tests using `integration_test` for the full create-to-Firestore flow
+4. **AI Insight Improvements**: User feedback mechanism (thumbs up/down), accuracy tracking over time, A/B test different prompt strategies
+5. **Push Notifications**: FCM for new articles from followed authors
 
 ## 5. Proof of the Project
 
@@ -318,15 +317,15 @@ create_article/                   ai_insight/
 ```
 
 ### Test Coverage
-242 tests across all layers — all passing:
+251 tests across all layers — all passing:
 - **Auth Domain — Entities/Params**: 8 tests (sign-in params equality: 4, sign-up params equality: 4)
 - **Auth Domain — Use Cases**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data — Models**: 5 tests (model conversion, Firebase user mapping, equality)
 - **Auth Data — Repository**: 12 tests (signIn/signUp/signOut success/failure, getCurrentUser, authStateChanges)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
-- **Create Article Domain — Use Cases**: 13 tests (create/upload/update/getByOwner use cases)
+- **Create Article Domain — Use Cases**: 16 tests (create/upload/update/getByOwner/getCommunityArticles use cases)
 - **Create Article Domain — Params**: 10 tests (create_article_params: 6, upload_article_image_params: 4)
-- **Create Article Data — Models**: 15 tests (model serialization incl. ownerUid/category, repository success/failure/getByOwner, entity-model conversion)
+- **Create Article Data — Models**: 18 tests (model serialization incl. ownerUid/category, repository success/failure/getByOwner/getAllArticles, entity-model conversion)
 - **Create Article Presentation — Cubit**: 17 tests (state transitions for create/update/upload/reset, error handling, null use case guard)
 - **Create Article Presentation — Widgets**: 23 tests (ArticleTextField: 9 incl. readOnly, ImagePickerWidget: 7, SubmitArticleButton: 7)
 - **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty ownerUid guard)
@@ -334,7 +333,7 @@ create_article/                   ai_insight/
 - **Daily News Domain — Use Cases**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
 - **Daily News Data — Models**: 8 tests (fromJson, fromRawData alias, fromEntity, toEntity, default image)
 - **Daily News Data — Repository**: 10 tests (offline fallback, cache, API success/error/exception, search query, getSavedArticles, save/remove)
-- **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
+- **Daily News Presentation**: 14 tests (RemoteArticlesBloc: 8 incl. community merge/conversion/resilience, LocalArticleBloc: 6)
 - **AI Insight Domain**: 19 tests (entity equality/props: 5, params equality/cacheKey: 10, use case success/failure/null-guard: 4)
 - **AI Insight Data**: 24 tests (model fromJson/toJson/fromEntity/toEntity/equality: 14, repository cache-hit/miss/resilience: 10)
 - **AI Insight Presentation**: 12 tests (cubit initial state, success/error/exception flows, param passing, state equality: 12)
@@ -358,6 +357,7 @@ Beyond the assignment requirements, I prioritized features based on the research
 
 *Pain point: Information overload with no way to prioritize. The starter app had a single unfiltered list.*
 
+- **Community Articles in Home Feed**: Firestore community-published articles are fetched in parallel with NewsAPI articles and merged into a single feed sorted by date (newest first). Community fetch is best-effort — if Firestore fails, NewsAPI articles still display without error. Full clean architecture: data source → repository → use case → bloc. Conversion maps `FirebaseArticleEntity` fields to `ArticleEntity` (e.g., `thumbnailUrl` → `urlToImage`, `createdAt` → `publishedAt`).
 - **Category Filters**: 7-category horizontal scroll bar (general, business, entertainment, health, science, sports, technology) flowing through the full stack to the NewsAPI.
 - **Search**: Debounced 500ms search bar with clear button. Fundamental news discovery mechanism.
 - **Pagination / Infinite Scroll**: Page/pageSize params through entire stack. Triggers at 300px from bottom. Prevents loading 100+ articles at once.
@@ -401,7 +401,7 @@ Beyond the assignment requirements, I prioritized features based on the research
 *Symmetry's own guidelines: Boy Scout Rule, clean architecture, TDD, small functions, meaningful names.*
 
 - **10-Bug Refactor**: Fixed crashes, architecture violations, and deprecated APIs in the starter code before adding features. Documented in `docs/REFACTOR_REPORT.md` with root cause analysis.
-- **242 Tests**: Unit tests across all layers — domain entities, params, use cases, data models, repositories, cubits/blocs, and presentation widgets.
+- **251 Tests**: Unit tests across all layers — domain entities, params, use cases, data models, repositories, cubits/blocs, and presentation widgets.
 - **0 Analyze Issues**: `flutter analyze` clean on every commit (1 info in generated `.g.dart` — not actionable).
 - **Architecture Compliance**: Renamed `pages/` to `screens/` per spec, extracted shared widgets, removed dead dependencies, enforced layer boundaries.
 - **8 Documentation Pages**: `ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`.
@@ -430,7 +430,6 @@ All documents are in the repository at [`docs/`](https://github.com/dac91/news-a
 - **CI/CD Pipeline**: GitHub Actions for automated testing and builds on every push
 - **Firestore Emulator Tests**: Test security rules against a local emulator instead of production
 - **Rich Text Editor**: Replace plain text with `flutter_quill` for formatted content
-- **Article Feed Integration**: Merge Firestore articles into the main news feed alongside NewsAPI articles
 - **AI Feedback Loop**: Thumbs up/down on insights to track accuracy over time
 - **Accessibility Audit**: Semantic labels, contrast ratios, screen reader testing
 
@@ -473,6 +472,9 @@ All documents are in the repository at [`docs/`](https://github.com/dac91/news-a
 | `feb1892` | docs: fix stale PRD phase statuses and clarify ownerUid use case naming in report (189/189 tests, 0 analyze issues) |
 | `1e991e2` | fix: move My Articles fetch to initState, fix Firestore index to ownerUid, update stale docs (189/189 tests, 0 analyze issues) |
 | `0a99ee0` | fix: remove cloud_firestore import from model (AV 1.2.4), add 53 new tests across all layers (242/242 tests, 0 analyze issues) |
+| `20206ed` | docs: align report with REPORT_INSTRUCTIONS guidelines — add learning journey, run instructions, file links (242/242 tests, 0 analyze issues) |
+| `aeae03f` | docs: rewrite report as AI Product Builder — process, tools, pain-point-driven features (242/242 tests, 0 analyze issues) |
+| `57ddd09` | feat: merge community articles into home feed, fix storage auth + publish navigation (251/251 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
@@ -495,7 +497,7 @@ All documents are in the repository at [`docs/`](https://github.com/dac91/news-a
 | Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 242 (all passing)
+- **Total tests**: 251 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 60+ (production code, tests, documentation)
 - **Features implemented**: 129 of 133 tracked items (97%)

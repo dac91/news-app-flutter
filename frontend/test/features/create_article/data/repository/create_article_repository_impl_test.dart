@@ -174,4 +174,65 @@ void main() {
       expect(result.error!.identifier, equals('getArticlesByOwner'));
     });
   });
+
+  group('getAllArticles', () {
+    final tModels = [
+      FirebaseArticleModel(
+        id: 'doc-1',
+        title: 'Article One',
+        description: 'Desc 1',
+        content: 'Content 1',
+        author: 'Alice',
+        thumbnailUrl: 'https://example.com/1.jpg',
+        ownerUid: 'uid-alice',
+        createdAt: DateTime(2026, 3, 25),
+      ),
+      FirebaseArticleModel(
+        id: 'doc-2',
+        title: 'Article Two',
+        description: 'Desc 2',
+        content: 'Content 2',
+        author: 'Bob',
+        thumbnailUrl: 'https://example.com/2.jpg',
+        ownerUid: 'uid-bob',
+        createdAt: DateTime(2026, 3, 24),
+      ),
+    ];
+
+    test('returns DataSuccess with list of all entities on success', () async {
+      when(() => mockFirestoreDataSource.getAllArticles())
+          .thenAnswer((_) async => tModels);
+
+      final result = await repository.getAllArticles();
+
+      expect(result, isA<DataSuccess<List<FirebaseArticleEntity>>>());
+      expect(result.data!.length, 2);
+      expect(result.data!.first.title, 'Article One');
+      expect(result.data!.last.title, 'Article Two');
+      verify(() => mockFirestoreDataSource.getAllArticles()).called(1);
+    });
+
+    test('returns DataSuccess with empty list when no articles exist',
+        () async {
+      when(() => mockFirestoreDataSource.getAllArticles())
+          .thenAnswer((_) async => []);
+
+      final result = await repository.getAllArticles();
+
+      expect(result, isA<DataSuccess<List<FirebaseArticleEntity>>>());
+      expect(result.data, isEmpty);
+    });
+
+    test('returns DataFailed with AppException when Firestore throws',
+        () async {
+      when(() => mockFirestoreDataSource.getAllArticles())
+          .thenThrow(Exception('Firestore error'));
+
+      final result = await repository.getAllArticles();
+
+      expect(result, isA<DataFailed<List<FirebaseArticleEntity>>>());
+      expect(result.error, isA<AppException>());
+      expect(result.error!.identifier, equals('getAllArticles'));
+    });
+  });
 }

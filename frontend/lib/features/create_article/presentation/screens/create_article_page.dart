@@ -496,11 +496,11 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 28),
+            Icon(Icons.check_circle, color: Theme.of(dialogContext).colorScheme.primary, size: 28),
             const SizedBox(width: 8),
             Text(isEdit ? 'Updated!' : 'Published!'),
           ],
@@ -513,8 +513,16 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // close dialog
-              Navigator.pop(context); // go back
+              Navigator.pop(dialogContext); // close dialog
+              if (widget.showBackButton) {
+                // Pushed route (edit mode or standalone create): pop back.
+                Navigator.pop(context);
+              } else {
+                // Tab mode: reset the form so the user can create another
+                // article. Popping here would remove the root route and
+                // leave a black screen.
+                _resetForm();
+              }
             },
             child: const Text(
               'Done',
@@ -524,6 +532,19 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         ],
       ),
     );
+  }
+
+  /// Clears all form fields and resets the cubit to its initial state.
+  ///
+  /// Used after a successful publish in tab mode so the user can
+  /// immediately create another article without navigating away.
+  void _resetForm() {
+    _titleController.clear();
+    _descriptionController.clear();
+    _contentController.clear();
+    // Re-fill author from auth (it's read-only but we want it populated)
+    _prefillAuthorFromAuth();
+    _cubit.reset();
   }
 
   void _showSnackBar(String message) {

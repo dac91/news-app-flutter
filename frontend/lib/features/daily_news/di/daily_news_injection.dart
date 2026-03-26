@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:news_app_clean_architecture/features/create_article/domain/usecases/get_community_articles_usecase.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/remote/news_api_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/repository/article_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/article_repository.dart';
@@ -37,7 +38,7 @@ void registerDailyNewsModule(GetIt sl) {
 
   // Blocs
   sl.registerFactory<RemoteArticlesBloc>(
-    () => RemoteArticlesBloc(sl()),
+    () => RemoteArticlesBloc(sl(), sl<GetCommunityArticlesUseCase>()),
   );
 
   sl.registerFactory<LocalArticleBloc>(

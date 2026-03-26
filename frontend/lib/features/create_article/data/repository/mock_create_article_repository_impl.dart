@@ -65,4 +65,10 @@ class MockCreateArticleRepositoryImpl implements CreateArticleRepository {
         _articles.where((a) => a.ownerUid == ownerUid).toList();
     return DataSuccess(filtered);
   }
+
+  @override
+  Future<DataState<List<FirebaseArticleEntity>>> getAllArticles() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return DataSuccess(List.unmodifiable(_articles));
+  }
 }

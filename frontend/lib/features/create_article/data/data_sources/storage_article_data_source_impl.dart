@@ -19,10 +19,40 @@ class StorageArticleDataSourceImpl implements StorageArticleDataSource {
     final fileName = _generateFileName(imageFile);
     final ref = _storage.ref().child('$_basePath/$fileName');
 
-    final uploadTask = await ref.putFile(imageFile);
+    // Explicitly set content type so Firebase Storage security rules
+    // can validate `request.resource.contentType.matches('image/.*')`.
+    // Without this, putFile may not set the content type on all platforms,
+    // causing an "unauthorized" rejection from the rules.
+    final contentType = _resolveContentType(fileName);
+    final metadata = SettableMetadata(contentType: contentType);
+
+    final uploadTask = await ref.putFile(imageFile, metadata);
     final downloadUrl = await uploadTask.ref.getDownloadURL();
 
     return downloadUrl;
+  }
+
+  /// Resolves the MIME content type from the file extension.
+  ///
+  /// Defaults to `image/jpeg` for unrecognised extensions since
+  /// the app only allows image uploads via the camera/gallery picker.
+  String _resolveContentType(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      case 'heic':
+      case 'heif':
+        return 'image/heic';
+      case 'jpg':
+      case 'jpeg':
+      default:
+        return 'image/jpeg';
+    }
   }
 
   /// Generates a unique filename using a timestamp prefix.

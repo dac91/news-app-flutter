@@ -60,6 +60,16 @@ class FirestoreArticleDataSourceImpl implements FirestoreArticleDataSource {
     return snapshot.docs.map((doc) => _modelFromSnapshot(doc)).toList();
   }
 
+  @override
+  Future<List<FirebaseArticleModel>> getAllArticles() async {
+    final snapshot = await _firestore
+        .collection(_collectionName)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) => _modelFromSnapshot(doc)).toList();
+  }
+
   /// Converts a Firestore document snapshot to a [FirebaseArticleModel].
   ///
   /// Handles the `Timestamp` → `DateTime` conversion so the model

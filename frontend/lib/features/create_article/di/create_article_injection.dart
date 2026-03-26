@@ -7,6 +7,7 @@ import 'package:news_app_clean_architecture/features/create_article/domain/repos
 import 'package:news_app_clean_architecture/features/create_article/domain/usecases/create_article_usecase.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/usecases/get_articles_by_author_usecase.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/usecases/update_article_usecase.dart';
+import 'package:news_app_clean_architecture/features/create_article/domain/usecases/get_community_articles_usecase.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/usecases/upload_article_image_usecase.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/create_article_cubit.dart';
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/my_articles_cubit.dart';
@@ -42,6 +43,10 @@ void registerCreateArticleModule(GetIt sl) {
 
   sl.registerSingleton<GetArticlesByAuthorUseCase>(
     GetArticlesByAuthorUseCase(sl()),
+  );
+
+  sl.registerSingleton<GetCommunityArticlesUseCase>(
+    GetCommunityArticlesUseCase(sl()),
   );
 
   // Cubit (factory — new instance per screen)
