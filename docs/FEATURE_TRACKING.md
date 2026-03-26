@@ -2,7 +2,7 @@
 
 ## Journalist News App - Symmetry Assignment
 
-**Last Updated:** 2026-03-25  
+**Last Updated:** 2026-03-26  
 
 ---
 
@@ -164,6 +164,7 @@
 | T-029 | Add Daily News Use Case Tests | 13 tests: GetArticle (4), SaveArticle (3), RemoveArticle (3), GetSavedArticle (3) | DONE | High | `test/features/daily_news/domain/usecases/` |
 | T-030 | Add RemoteArticlesBloc Tests | 5 tests: initial state, success, error, params passing, pagination/hasReachedMax | DONE | High | `test/features/daily_news/presentation/bloc/` |
 | T-031 | Add LocalArticleBloc Tests | 6 tests: getSaved success/error, save+reload, remove+reload, save error, remove error | DONE | High | `test/features/daily_news/presentation/bloc/` |
+| T-032 | Add AI Insight Tests | 47 tests: entity (4), params (9), model (12), use case (4), repository (7), cubit (11) | DONE | High | `test/features/ai_insight/` |
 
 ### 3.7 Compliance Fixes
 
@@ -174,6 +175,26 @@
 | T-034 | Isolate Firebase from Auth Repository | Moved `FirebaseAuthException` handling into data source; repo catches `AppException` only | DONE | Medium | `firebase_auth_data_source_impl.dart`, `auth_repository_impl.dart` |
 | T-035 | Register DraftService in DI | Added `DraftService` singleton to `injection_container.dart`; presentation uses `sl<DraftService>()` | DONE | Medium | `injection_container.dart`, `create_article_page.dart` |
 | T-036 | Fix List<dynamic> Type in RemoteArticlesBloc | Added explicit `<ArticleEntity>` type annotations and import | DONE | Medium | `remote_article_bloc.dart` |
+
+### 3.8 AI Insight Feature
+
+| # | Improvement | Description | Status | Priority | File(s) |
+|---|------------|-------------|--------|----------|---------|
+| AI-001 | AI Insight Entity | `AiInsightEntity` — Equatable, 5 fields (summaryBullets, tone, toneExplanation, sourceContext, emphasisAnalysis) | DONE | High | `domain/entities/ai_insight_entity.dart` |
+| AI-002 | Get Insight Params | `GetInsightParams` — Equatable, cacheKey getter (URL hash) | DONE | High | `domain/params/get_insight_params.dart` |
+| AI-003 | AI Insight Repository (Abstract) | `AiInsightRepository` — getArticleInsight() method | DONE | High | `domain/repository/ai_insight_repository.dart` |
+| AI-004 | Get Article Insight Use Case | `GetArticleInsightUseCase` — delegates to repository | DONE | High | `domain/usecases/get_article_insight_usecase.dart` |
+| AI-005 | Data Source Interfaces | `GeminiDataSource` + `InsightCacheDataSource` abstractions | DONE | High | `data/data_sources/ai_insight_data_sources.dart` |
+| AI-006 | Gemini Data Source Impl | Structured prompt, JSON parsing, `gemini-2.0-flash` model | DONE | High | `data/data_sources/gemini_data_source_impl.dart` |
+| AI-007 | Firestore Insight Cache | Cache read/write in `ai_insights` Firestore collection | DONE | High | `data/data_sources/firestore_insight_cache_impl.dart` |
+| AI-008 | AI Insight Model | `AiInsightModel` — fromJson/toJson/toEntity/fromEntity | DONE | High | `data/models/ai_insight_model.dart` |
+| AI-009 | AI Insight Repository Impl | Cache-first: Firestore → Gemini → cache → return | DONE | High | `data/repository/ai_insight_repository_impl.dart` |
+| AI-010 | AI Insight Cubit | `AiInsightCubit` — getInsight() method, 4 states | DONE | High | `presentation/cubit/ai_insight_cubit.dart` |
+| AI-011 | AI Insight State | Initial/Loading/Loaded/Error via Equatable | DONE | High | `presentation/cubit/ai_insight_state.dart` |
+| AI-012 | AI Insight Panel Widget | Collapsible card with tone badge, bullets, expandable sections, disclaimer | DONE | High | `presentation/widgets/ai_insight_panel.dart` |
+| AI-013 | Article Detail Integration | MultiBlocProvider + AiInsightPanel in article detail body | DONE | High | `article_detail.dart` |
+| AI-014 | DI Registration | All AI Insight classes registered in injection_container.dart | DONE | High | `injection_container.dart` |
+| AI-015 | Gemini API Key Security | Key via `--dart-define=GEMINI_API_KEY=...` | DONE | High | `constants.dart` |
 
 ---
 
@@ -214,6 +235,7 @@
 | O-014 | Codebase Refactoring Report | 10 issues documented with root cause analysis | DONE | Medium |
 | O-015 | Image Source Selection | Gallery + Camera via bottom sheet dialog | DONE | Medium |
 | O-016 | Stateful Error Recovery | Error state preserves uploaded image URL for retry | DONE | Medium |
+| O-017 | AI Insight — Perspective Context | Gemini-powered article summary + tone analysis + source context + emphasis analysis with Firestore caching | DONE | High |
 
 ---
 
@@ -224,11 +246,12 @@
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
 | New Features (Required) | 27 | 27 | 0 | 0 | 0 |
-| Technical Improvements | 36 | 36 | 0 | 0 | 0 |
+| Technical Improvements | 37 | 37 | 0 | 0 | 0 |
+| AI Insight Feature | 15 | 15 | 0 | 0 | 0 |
 | UI Improvements | 10 | 10 | 0 | 0 | 0 |
-| Overdelivery Features | 16 | 12 | 0 | 0 | 4 |
-| **Total** | **105** | **101** | **0** | **0** | **4** |
+| Overdelivery Features | 17 | 13 | 0 | 0 | 4 |
+| **Total** | **122** | **118** | **0** | **0** | **4** |
 
 > **Note on deferred items**: O-004 (Rich Text Editor), O-006 (Multi-Image Gallery), and O-008 (Push Notifications) were deferred as low-ROI for the assignment scope — they would add complexity without demonstrating additional architectural skill. O-011 (CI/CD Pipeline) is not relevant for this assignment submission but would be essential in a production environment. A GitHub Actions workflow running `flutter analyze`, `flutter test`, and `flutter build apk` on every push to `main` would be the standard setup.
 > 
-> **Test counts**: 130 total tests — auth (32), create_article (74), daily_news (24). All passing.
+> **Test counts**: 177 total tests — auth (32), create_article (74), daily_news (24), ai_insight (47). All passing.

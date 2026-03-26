@@ -2,8 +2,8 @@
 
 ## Journalist News App - Symmetry Assignment
 
-**Document Version:** 2.0  
-**Date:** 2026-03-25  
+**Document Version:** 3.0  
+**Date:** 2026-03-26  
 **Author:** Diego  
 **Status:** Research-Informed Draft  
 
@@ -68,13 +68,10 @@ Deliver a fully functional, well-architected Flutter application that:
 
 ### 4.2 Out of Scope (Future Considerations)
 
-- User authentication and authorization (readers can access everything; journalists don't need login for v1 — the assignment doesn't require it)
-- Article editing after publication
 - Rich text editor for article content (keep it simple — Ghost's success is attributed to simplicity; see [Assumption 11](./USER_RESEARCH.md#assumption-11))
 - Push notifications
 - Analytics dashboard
 - Multi-platform deployment (web, desktop)
-- Categories, tags, scheduling (v2 — see [Assumption 11](./USER_RESEARCH.md#assumption-11): simple forms outperform complex ones)
 
 ### 4.3 Competitive Context
 
@@ -132,6 +129,18 @@ Deliver a fully functional, well-architected Flutter application that:
 - **FR-4.3:** Firestore security rules enforce schema and access control
 - **FR-4.4:** Cloud Storage security rules enforce path structure and file types
 - **FR-4.5:** Firebase Emulator Suite configured for local development
+
+### FR-5: AI Insight — Perspective Context (New — Overdelivery)
+- **FR-5.1:** User can request an AI-generated insight for any article from the detail view
+- **FR-5.2:** Insight includes: 3-5 key fact summary bullets, tone classification with explanation, source context, and emphasis analysis
+- **FR-5.3:** Insights generated via Google Gemini API (`gemini-2.0-flash` model) with structured JSON prompt
+- **FR-5.4:** Results cached in Firestore `ai_insights` collection (keyed by URL hash) for deduplication
+- **FR-5.5:** Cache-first strategy: check Firestore → on miss, call Gemini → cache result → return
+- **FR-5.6:** Lazy-loaded: only triggered when user taps "Get AI Insight" button (no automatic API calls)
+- **FR-5.7:** Collapsible card UI with tone badge (color-coded), summary bullets (always visible when loaded), and expandable sections for tone explanation, source context, and emphasis analysis
+- **FR-5.8:** Always displays "AI-generated, verify independently" disclaimer
+- **FR-5.9:** Graceful error handling: error state with user-friendly message, no crash on API failure
+- **FR-5.10:** Gemini API key secured via `--dart-define=GEMINI_API_KEY=...` (same pattern as NewsAPI key)
 
 ---
 
@@ -194,7 +203,14 @@ Deliver a fully functional, well-architected Flutter application that:
 |  - Data           |               ^                          ^
 +-------------------+               |                          |
         |                    Write articles             Read articles
+        |                    Cache AI insights
         +--------------------+------+-----------------------+--+
+                                                            |
+                                                    +-------------------+
+                                                    |   Google Gemini   |
+                                                    |   (AI API)        |
+                                                    |   gemini-2.0-flash|
+                                                    +-------------------+
 ```
 
 ### 7.2 Tech Stack
@@ -208,6 +224,7 @@ Deliver a fully functional, well-architected Flutter application that:
 | Local Database | Floor (SQLite ORM) |
 | Remote Database | Firebase Firestore |
 | File Storage | Firebase Cloud Storage |
+| AI/ML API | Google Gemini (`google_generative_ai`) |
 | Image Handling | cached_network_image, image_picker |
 | Build Tools | build_runner (code gen for Floor, Retrofit) |
 
@@ -244,6 +261,36 @@ lib/features/create_article/
     └── widgets/
         ├── article_form.dart
         └── image_picker_widget.dart
+```
+
+### 7.4 AI Insight Module Structure (New Feature)
+
+```
+lib/features/ai_insight/
+├── data/
+│   ├── data_sources/
+│   │   ├── ai_insight_data_sources.dart       # Abstract interfaces
+│   │   ├── gemini_data_source_impl.dart       # Gemini API call + JSON parsing
+│   │   └── firestore_insight_cache_impl.dart  # Firestore cache read/write
+│   ├── models/
+│   │   └── ai_insight_model.dart              # Serialization model
+│   └── repository/
+│       └── ai_insight_repository_impl.dart    # Cache-first strategy
+├── domain/
+│   ├── entities/
+│   │   └── ai_insight_entity.dart             # Domain entity (Equatable)
+│   ├── params/
+│   │   └── get_insight_params.dart            # Use case params + cacheKey
+│   ├── repository/
+│   │   └── ai_insight_repository.dart         # Abstract interface
+│   └── usecases/
+│       └── get_article_insight_usecase.dart
+└── presentation/
+    ├── cubit/
+    │   ├── ai_insight_cubit.dart              # State management
+    │   └── ai_insight_state.dart              # Initial/Loading/Loaded/Error
+    └── widgets/
+        └── ai_insight_panel.dart              # Collapsible card UI
 ```
 
 ---
@@ -293,6 +340,22 @@ Home → Tap FAB (+) → push /CreateArticle
       → Save article to Firestore
       → Success → confirmation + navigate back to home
       → Failure → friendly error + retry option
+```
+
+### 8.4 AI Insight (New — overdelivery)
+```
+Article Detail → Scroll down → See "Get AI Insight" button
+  → Tap "Get AI Insight"
+    → AiInsightCubit emits Loading (shimmer indicator)
+    → Repository: Check Firestore cache (by URL hash)
+      → Cache HIT → Return cached insight → emit Loaded
+      → Cache MISS → Call Gemini API → Parse JSON → Cache in Firestore → emit Loaded
+    → Loaded: Collapsible card appears:
+      → Tone badge (color-coded: neutral=blue, critical=orange, alarming=red, etc.)
+      → 3-5 Summary bullet points (always visible)
+      → Expandable sections: Tone Explanation, Source Context, Emphasis Analysis
+      → "AI-generated, verify independently" disclaimer
+    → Error → User-friendly message with retry option
 ```
 
 ---
@@ -371,6 +434,10 @@ Home → Tap FAB (+) → push /CreateArticle
 | Navigation to create | FAB on home screen | Bottom nav tab, drawer menu | Assignment specifies FAB; Material Design standard for primary creation action. |
 | Validation style | Inline, real-time, field-level | Submit-then-validate | Inline validation yields 25% higher completion rates (Material Design guidelines). |
 | Error messages | Plain language + recovery action | Technical error codes | "Your cover photo couldn't be uploaded. Check your connection." > "Storage Error 403" |
+| AI framing | "Perspective Context" — tone/emphasis/source analysis | Binary "fact-check" (true/false) | 42% trust stories *less* after AI disclosure (transparency paradox). Framing as context/perspective avoids truth-arbiter backlash (see Grok's 54.5% agreement rate). Data: Reuters DNR 2025, WEF 2024, Trusting News 2025. |
+| AI model | Gemini 2.0 Flash (free tier, 15 RPM) | GPT-4, Claude | Free tier for assignment scope; structured JSON output; sufficient quality for summarization. |
+| AI caching | Firestore `ai_insights` collection | No caching / in-memory | Identical articles produce identical insights; caching avoids redundant API calls and stays within free tier limits. |
+| AI trigger | Lazy (user taps button) | Automatic on article open | Respects user agency; avoids unnecessary API calls; keeps loading time zero for users who don't want AI. |
 
 ---
 

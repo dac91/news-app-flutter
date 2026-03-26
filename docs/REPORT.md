@@ -21,6 +21,7 @@ I decided to approach this like a real product task, not a coding exercise. That
 - **Symmetry's specific architecture rules**: The `ARCHITECTURE_VIOLATIONS.md` (50 rules) and `CODING_GUIDELINES.md` (6 rules) were more prescriptive than typical clean architecture guides. I spent time mapping each rule to the existing codebase to understand what was and wasn't compliant. This taught me that architecture docs are only useful when enforced — the existing code violated several of its own rules.
 - **Floor ORM**: The starter project uses Floor for local SQLite. While I didn't need to modify the Floor layer, understanding its generated code (`*.g.dart` files) was necessary to avoid breaking the build during refactoring.
 - **Dio 4.x specifics**: The project uses Dio 4 (with `DioError`), not Dio 5 (`DioException`). I had to be careful not to "upgrade" to Dio 5 APIs, which would cascade into dependency conflicts.
+- **Google Gemini API for structured output**: The `google_generative_ai` package sends prompts to Gemini and returns text. Getting reliable structured JSON output required careful prompt engineering — specifying exact fields, types, and constraints, then parsing with defensive fallbacks for every field.
 
 ### Resources Used
 - Symmetry's own docs (`APP_ARCHITECTURE.md`, `ARCHITECTURE_VIOLATIONS.md`, `CODING_GUIDELINES.md`) — these were the primary reference
@@ -70,6 +71,15 @@ I decided to approach this like a real product task, not a coding exercise. That
 
 **Lesson**: Clean architecture pays dividends at test time. If your tests need to mock framework internals, your abstractions are leaking.
 
+### Challenge 6: AI Feature — Choosing the Right Framing
+**What I considered**: Adding AI to a news app is risky territory. Research showed that Grok's inline fact-checking only agrees with human fact-checkers 54.5% of the time, and 42% of users trust stories *less* after seeing an AI disclosure (transparency paradox). Binary fact-checking would make the app a "truth arbiter" — a role no LLM is reliable enough to fill.
+
+**Decision**: I framed the feature as "Perspective Context" — tone analysis, source background, emphasis analysis — not binary fact-checking. This aligns with what Reuters DNR 2025 respondents actually asked for: *"Say where the information is from and the political view of the author."* The feature helps readers think critically rather than outsourcing judgment to an AI.
+
+**Technical choices**: Gemini 2.0 Flash (free tier, 15 RPM) with Firestore caching to stay within limits. Lazy-loaded (user taps button) to respect user agency. Structured JSON prompt with defensive parsing for every field.
+
+**Lesson**: The hardest part of adding AI features isn't the API call — it's the product framing. Getting the framing wrong turns a useful feature into a liability.
+
 ## 4. Reflection and Future Directions
 
 ### What I Learned
@@ -110,44 +120,44 @@ The following screenshots were captured from the app running on an Android emula
 | Profile | ![Profile](../screenshots/07_profile.png) |
 
 ### Architecture Overview
-The feature follows clean architecture with 3 layers:
+The features follow clean architecture with 3 layers:
 
 ```
-create_article/
-├── data/                         # Data layer (Firebase interactions)
-│   ├── data_sources/
-│   │   ├── article_data_sources.dart         # Abstract interfaces
-│   │   ├── firestore_article_data_source_impl.dart  # Firestore impl
-│   │   └── storage_article_data_source_impl.dart    # Cloud Storage impl
-│   ├── models/
-│   │   └── firebase_article_model.dart       # Serialization model
-│   └── repository/
-│       └── create_article_repository_impl.dart  # Repository impl
-├── domain/                       # Domain layer (pure Dart)
-│   ├── entities/
-│   │   └── firebase_article_entity.dart      # Domain entity
-│   ├── params/
-│   │   ├── create_article_params.dart        # Use case params
-│   │   └── upload_article_image_params.dart
-│   ├── repository/
-│   │   └── create_article_repository.dart    # Abstract interface
-│   └── usecases/
-│       ├── create_article_usecase.dart
-│       └── upload_article_image_usecase.dart
-└── presentation/                 # Presentation layer (Flutter UI)
-    ├── cubit/
-    │   ├── create_article_cubit.dart         # State management
-    │   └── create_article_state.dart         # State definitions
+create_article/                   ai_insight/
+├── data/                         ├── data/
+│   ├── data_sources/             │   ├── data_sources/
+│   │   ├── article_data_sources  │   │   ├── ai_insight_data_sources.dart
+│   │   ├── firestore_impl        │   │   ├── gemini_data_source_impl.dart
+│   │   └── storage_impl          │   │   └── firestore_insight_cache_impl.dart
+│   ├── models/                   │   ├── models/
+│   │   └── firebase_article_*    │   │   └── ai_insight_model.dart
+│   └── repository/               │   └── repository/
+│       └── *_repository_impl     │       └── ai_insight_repository_impl.dart
+├── domain/                       ├── domain/
+│   ├── entities/                 │   ├── entities/
+│   │   └── firebase_article_*    │   │   └── ai_insight_entity.dart
+│   ├── params/                   │   ├── params/
+│   │   ├── create_article_*      │   │   └── get_insight_params.dart
+│   │   └── upload_image_*        │   ├── repository/
+│   ├── repository/               │   │   └── ai_insight_repository.dart
+│   │   └── create_article_*      │   └── usecases/
+│   └── usecases/                 │       └── get_article_insight_usecase.dart
+│       ├── create_article_*      └── presentation/
+│       └── upload_image_*            ├── cubit/
+└── presentation/                     │   ├── ai_insight_cubit.dart
+    ├── cubit/                        │   └── ai_insight_state.dart
+    │   ├── create_article_*          └── widgets/
+    │   └── create_article_*              └── ai_insight_panel.dart
     ├── screens/
-    │   └── create_article_page.dart          # Main screen
+    │   └── create_article_page
     └── widgets/
-        ├── article_text_field.dart           # Reusable form field
-        ├── image_picker_widget.dart          # Image selection UI
-        └── submit_article_button.dart        # Submit button
+        ├── article_text_field
+        ├── image_picker_widget
+        └── submit_article_button
 ```
 
 ### Test Coverage
-130 tests across all layers — all passing:
+177 tests across all layers — all passing:
 - **Auth Domain**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data**: 5 tests (model conversion, Firebase user mapping, equality)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
@@ -158,6 +168,9 @@ create_article/
 - **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty author guard)
 - **Daily News Domain**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
 - **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
+- **AI Insight Domain**: 17 tests (entity equality/props: 4, params equality/cacheKey: 9, use case success/failure/null-guard: 4)
+- **AI Insight Data**: 19 tests (model fromJson/toJson/fromEntity/toEntity/equality: 12, repository cache-hit/miss/error: 7)
+- **AI Insight Presentation**: 11 tests (cubit initial state, success/error/exception flows, param passing, state equality: 11)
 
 ## 6. Overdelivery
 
@@ -298,6 +311,22 @@ create_article/
 
 **Purpose**: Creating content without the ability to correct it is incomplete. Edit support closes the content lifecycle loop.
 
+#### ee. AI Insight — Perspective Context (O-017)
+**Functionality**: Gemini-powered article analysis available in the article detail view. Full clean architecture implementation:
+- **Domain**: `AiInsightEntity`, `GetInsightParams` (with URL-hash cache key), `AiInsightRepository` (abstract), `GetArticleInsightUseCase`
+- **Data**: `AiInsightModel` (fromJson/toJson/toEntity/fromEntity), `GeminiDataSource` + `InsightCacheDataSource` (abstract interfaces), `GeminiDataSourceImpl` (structured prompt + JSON parsing), `FirestoreInsightCacheImpl` (cache in `ai_insights` collection), `AiInsightRepositoryImpl` (cache-first: Firestore → Gemini → cache → return)
+- **Presentation**: `AiInsightCubit` + 4 states (Initial/Loading/Loaded/Error), `AiInsightPanel` (collapsible card with tone badge, summary bullets, expandable sections, AI disclaimer)
+- **Integration**: `MultiBlocProvider` in article detail, DI registrations in `injection_container.dart`
+- **Tests**: 47 new tests across entity (4), params (9), model (12), use case (4), repository (7), cubit (11)
+
+**Purpose**: Addresses the trust crisis in news (58% worry about fake news — Reuters DNR 2025). Turns NewsAPI's content truncation limitation into a feature. Framed as "Perspective Context" (not fact-checking) to avoid truth-arbiter backlash based on Grok/X research showing 54.5% agreement rate with human fact-checkers.
+
+**Research-backed design decisions**:
+- Lazy-loaded (user taps button) — respects user agency
+- "AI-generated, verify independently" disclaimer — 94% want AI use disclosed (Trusting News, n=6,000+)
+- Tone/emphasis analysis over true/false — avoids the transparency paradox (42% trust less after AI disclosure)
+- Firestore caching — stays within Gemini free tier (15 RPM)
+
 ### 2. Prototypes Created
 
 #### a. DB Schema Documentation
@@ -320,6 +349,7 @@ create_article/
 - **Firestore Emulator Tests**: Use the Firebase Emulator Suite to test Firestore security rules and data source implementations against a local emulator instead of production.
 - **Rich Text Editor**: Replace the plain text content field with `flutter_quill` for formatted content creation.
 - **Article Feed Integration**: Merge Firestore-created articles into the main news feed alongside NewsAPI articles.
+- **AI Insight Improvements**: Add user feedback mechanism (thumbs up/down on insights), track accuracy over time, A/B test different prompt strategies, support multiple AI models for comparison.
 
 ## 7. Extra Sections
 
@@ -337,8 +367,10 @@ create_article/
 | `e869eac` | fix: null safety hardening — remove all force-unwrap operators from existing UI |
 | `681071f` | fix: pull-to-refresh, error retry, use case null guards, remove unused intl, emulator docs |
 | `f43b47b` | feat: architecture cleanup, shimmer loading, hero animation, empty state, dark mode |
-| *(latest)* | feat: auth, editing, search, categories, drafts, sharing, pagination, offline, splash, bottom nav (104/104 tests) |
+| `e28cdfc` | feat: auth, editing, search, categories, drafts, sharing, pagination, offline, splash, bottom nav (104/104 tests) |
 | `84337c9` | fix: compliance fixes, daily_news tests, audit rewrite (130/130 tests, 0 analyze issues) |
+| `6f320f0` | docs: add AI Insight research — trust crisis data, Grok/X lessons, perspective context approach, 13 new sources |
+| `17186e5` | feat: add AI Insight feature — Gemini-powered perspective context with Firestore caching (177/177 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
@@ -355,14 +387,19 @@ create_article/
 | SharedPreferences for drafts | Lightweight key-value storage for a single draft; Floor would be overkill for a single JSON blob |
 | Debounced search (500ms) | Prevents API calls on every keystroke while feeling responsive; standard UX pattern |
 | connectivity_plus for offline | Lightweight check before API calls; degrades to cached articles instead of showing error |
+| Gemini 2.0 Flash | Free tier (15 RPM); sufficient quality for summarization; structured JSON output support |
+| Perspective Context (not fact-check) | Avoids truth-arbiter role; 42% trust less after AI disclosure; Grok agrees with fact-checkers only 54.5% |
+| Lazy AI loading (button trigger) | Respects user agency; avoids unnecessary API calls; keeps load time zero for non-AI users |
+| Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 130 (all passing)
+- **Total tests**: 177 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
-- **New files created**: 50+ (production code, tests, documentation)
-- **Features implemented**: 101 of 105 tracked items (96%)
+- **New files created**: 60+ (production code, tests, documentation)
+- **Features implemented**: 118 of 122 tracked items (97%)
 - **Architecture violations fixed**: 6 (in existing code) + 6 compliance fixes
 - **Null safety fixes**: 5 files with force-unwrap operators replaced with safe alternatives
-- **Security fixes**: 1 (API key moved out of source control)
+- **Security fixes**: 2 (NewsAPI key + Gemini API key moved out of source control via `--dart-define`)
 - **Documentation pages created**: 8 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`)
-- **Feature tracking**: 101 of 105 items complete (96%), 4 deferred (low priority / out of scope)
+- **Feature tracking**: 118 of 122 items complete (97%), 4 deferred (low priority / out of scope)
+- **External APIs integrated**: 3 (NewsAPI, Firebase, Google Gemini)
