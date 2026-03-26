@@ -26,13 +26,17 @@ class AiInsightRepositoryImpl implements AiInsightRepository {
     GetInsightParams params,
   ) async {
     try {
-      // 1. Check cache first
-      final cached = await _cacheDataSource.getCachedInsight(params.cacheKey);
-      if (cached != null) {
-        return DataSuccess(cached.toEntity());
+      // 1. Check cache first (non-fatal if cache is unavailable)
+      try {
+        final cached = await _cacheDataSource.getCachedInsight(params.cacheKey);
+        if (cached != null) {
+          return DataSuccess(cached.toEntity());
+        }
+      } catch (_) {
+        // Cache read failed (e.g., permission denied) — proceed to Gemini
       }
 
-      // 2. Cache miss — call Gemini API
+      // 2. Cache miss or cache error — call Gemini API
       final model = await _geminiDataSource.generateInsight(
         title: params.title,
         description: params.description,
@@ -40,8 +44,12 @@ class AiInsightRepositoryImpl implements AiInsightRepository {
         source: params.source,
       );
 
-      // 3. Cache the result
-      await _cacheDataSource.cacheInsight(params.cacheKey, model);
+      // 3. Cache the result (non-fatal if caching fails)
+      try {
+        await _cacheDataSource.cacheInsight(params.cacheKey, model);
+      } catch (_) {
+        // Cache write failed — result is still valid, just not cached
+      }
 
       return DataSuccess(model.toEntity());
     } catch (e) {

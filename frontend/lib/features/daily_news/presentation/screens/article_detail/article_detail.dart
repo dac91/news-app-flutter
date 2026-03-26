@@ -159,17 +159,21 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
   }
 
   Widget _buildAiInsightSection() {
-    return AiInsightPanel(
-      articleUrl: widget.article?.url,
-      onRequestInsight: () {
-        context.read<AiInsightCubit>().getInsight(
-              title: widget.article?.title ?? '',
-              description: widget.article?.description,
-              content: widget.article?.content,
-              source: widget.article?.author,
-              url: widget.article?.url,
-            );
-      },
+    // Use Builder to obtain a context that is below MultiBlocProvider,
+    // so that context.read<AiInsightCubit>() can find the cubit.
+    return Builder(
+      builder: (innerContext) => AiInsightPanel(
+        articleUrl: widget.article?.url,
+        onRequestInsight: () {
+          innerContext.read<AiInsightCubit>().getInsight(
+                title: widget.article?.title ?? '',
+                description: widget.article?.description,
+                content: widget.article?.content,
+                source: widget.article?.author,
+                url: widget.article?.url,
+              );
+        },
+      ),
     );
   }
 

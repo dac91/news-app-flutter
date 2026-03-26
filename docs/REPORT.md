@@ -118,6 +118,7 @@ The following screenshots were captured from the app running on an Android emula
 | Saved Articles | ![Saved Articles](../screenshots/05_saved_articles.png) |
 | Create Article | ![Create Article](../screenshots/06_create_article.png) |
 | Profile | ![Profile](../screenshots/07_profile.png) |
+| AI Insight | ![AI Insight](../screenshots/08_ai_insight.png) |
 
 ### Architecture Overview
 The features follow clean architecture with 3 layers:
@@ -157,7 +158,7 @@ create_article/                   ai_insight/
 ```
 
 ### Test Coverage
-177 tests across all layers — all passing:
+180 tests across all layers — all passing:
 - **Auth Domain**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data**: 5 tests (model conversion, Firebase user mapping, equality)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
@@ -169,7 +170,7 @@ create_article/                   ai_insight/
 - **Daily News Domain**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
 - **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
 - **AI Insight Domain**: 17 tests (entity equality/props: 4, params equality/cacheKey: 9, use case success/failure/null-guard: 4)
-- **AI Insight Data**: 19 tests (model fromJson/toJson/fromEntity/toEntity/equality: 12, repository cache-hit/miss/error: 7)
+- **AI Insight Data**: 22 tests (model fromJson/toJson/fromEntity/toEntity/equality: 12, repository cache-hit/miss/resilience: 10)
 - **AI Insight Presentation**: 11 tests (cubit initial state, success/error/exception flows, param passing, state equality: 11)
 
 ## 6. Overdelivery
@@ -317,7 +318,7 @@ create_article/                   ai_insight/
 - **Data**: `AiInsightModel` (fromJson/toJson/toEntity/fromEntity), `GeminiDataSource` + `InsightCacheDataSource` (abstract interfaces), `GeminiDataSourceImpl` (structured prompt + JSON parsing), `FirestoreInsightCacheImpl` (cache in `ai_insights` collection), `AiInsightRepositoryImpl` (cache-first: Firestore → Gemini → cache → return)
 - **Presentation**: `AiInsightCubit` + 4 states (Initial/Loading/Loaded/Error), `AiInsightPanel` (collapsible card with tone badge, summary bullets, expandable sections, AI disclaimer)
 - **Integration**: `MultiBlocProvider` in article detail, DI registrations in `injection_container.dart`
-- **Tests**: 47 new tests across entity (4), params (9), model (12), use case (4), repository (7), cubit (11)
+- **Tests**: 50 tests across entity (4), params (9), model (12), use case (4), repository (10), cubit (11)
 
 **Purpose**: Addresses the trust crisis in news (58% worry about fake news — Reuters DNR 2025). Turns NewsAPI's content truncation limitation into a feature. Framed as "Perspective Context" (not fact-checking) to avoid truth-arbiter backlash based on Grok/X research showing 54.5% agreement rate with human fact-checkers.
 
@@ -393,7 +394,7 @@ create_article/                   ai_insight/
 | Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 177 (all passing)
+- **Total tests**: 180 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 60+ (production code, tests, documentation)
 - **Features implemented**: 118 of 122 tracked items (97%)

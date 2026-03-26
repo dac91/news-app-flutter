@@ -172,16 +172,87 @@ void main() {
       });
     });
 
-    group('cache read error', () {
-      test('returns DataFailed when cache read throws', () async {
+    group('cache read error (resilient fallback)', () {
+      test('falls back to Gemini when cache read throws', () async {
         when(() => mockCacheDataSource.getCachedInsight(any()))
             .thenThrow(Exception('Firestore unavailable'));
+        when(() => mockGeminiDataSource.generateInsight(
+              title: any(named: 'title'),
+              description: any(named: 'description'),
+              content: any(named: 'content'),
+              source: any(named: 'source'),
+            )).thenAnswer((_) async => tModel);
+        when(() => mockCacheDataSource.cacheInsight(any(), any()))
+            .thenAnswer((_) async {});
+
+        final result = await repository.getArticleInsight(tParams);
+
+        expect(result, isA<DataSuccess<AiInsightEntity>>());
+        expect(result.data!.tone, 'neutral');
+        verify(
+          () => mockGeminiDataSource.generateInsight(
+            title: tParams.title,
+            description: tParams.description,
+            content: tParams.content,
+            source: tParams.source,
+          ),
+        ).called(1);
+      });
+
+      test('returns DataFailed when both cache and Gemini fail', () async {
+        when(() => mockCacheDataSource.getCachedInsight(any()))
+            .thenThrow(Exception('Firestore unavailable'));
+        when(() => mockGeminiDataSource.generateInsight(
+              title: any(named: 'title'),
+              description: any(named: 'description'),
+              content: any(named: 'content'),
+              source: any(named: 'source'),
+            )).thenThrow(Exception('Gemini API error'));
 
         final result = await repository.getArticleInsight(tParams);
 
         expect(result, isA<DataFailed<AiInsightEntity>>());
         expect(result.error!.identifier, 'getArticleInsight');
-        expect(result.error!.message, contains('Firestore unavailable'));
+        expect(result.error!.message, contains('Gemini API error'));
+      });
+
+      test('still caches Gemini result after cache read failure', () async {
+        when(() => mockCacheDataSource.getCachedInsight(any()))
+            .thenThrow(Exception('Firestore unavailable'));
+        when(() => mockGeminiDataSource.generateInsight(
+              title: any(named: 'title'),
+              description: any(named: 'description'),
+              content: any(named: 'content'),
+              source: any(named: 'source'),
+            )).thenAnswer((_) async => tModel);
+        when(() => mockCacheDataSource.cacheInsight(any(), any()))
+            .thenAnswer((_) async {});
+
+        await repository.getArticleInsight(tParams);
+
+        verify(
+          () => mockCacheDataSource.cacheInsight(tParams.cacheKey, tModel),
+        ).called(1);
+      });
+    });
+
+    group('cache write error (resilient)', () {
+      test('returns DataSuccess even when cache write throws', () async {
+        when(() => mockCacheDataSource.getCachedInsight(any()))
+            .thenAnswer((_) async => null);
+        when(() => mockGeminiDataSource.generateInsight(
+              title: any(named: 'title'),
+              description: any(named: 'description'),
+              content: any(named: 'content'),
+              source: any(named: 'source'),
+            )).thenAnswer((_) async => tModel);
+        when(() => mockCacheDataSource.cacheInsight(any(), any()))
+            .thenThrow(Exception('Firestore write denied'));
+
+        final result = await repository.getArticleInsight(tParams);
+
+        expect(result, isA<DataSuccess<AiInsightEntity>>());
+        expect(result.data!.tone, 'neutral');
       });
     });
   });
