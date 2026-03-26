@@ -3,8 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:news_app_clean_architecture/core/constants/constants.dart';
 import 'package:news_app_clean_architecture/core/services/connectivity_service.dart';
 import 'package:news_app_clean_architecture/core/services/draft_service.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/data/data_sources/ai_insight_data_sources.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/data/data_sources/firestore_insight_cache_impl.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/data/data_sources/gemini_data_source_impl.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/data/repository/ai_insight_repository_impl.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/domain/repository/ai_insight_repository.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/domain/usecases/get_article_insight_usecase.dart';
+import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_data_source.dart';
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_data_source_impl.dart';
 import 'package:news_app_clean_architecture/features/auth/data/repository/auth_repository_impl.dart';
@@ -168,6 +177,42 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<MyArticlesCubit>(
     () => MyArticlesCubit(
       getArticlesByAuthorUseCase: sl(),
+    ),
+  );
+
+  // --- ai_insight feature ---
+
+  // Gemini AI Model
+  sl.registerSingleton<GenerativeModel>(
+    GenerativeModel(
+      model: 'gemini-2.0-flash',
+      apiKey: geminiAPIKey,
+    ),
+  );
+
+  // Data Sources
+  sl.registerSingleton<GeminiDataSource>(
+    GeminiDataSourceImpl(sl()),
+  );
+
+  sl.registerSingleton<InsightCacheDataSource>(
+    FirestoreInsightCacheImpl(sl()),
+  );
+
+  // Repository
+  sl.registerSingleton<AiInsightRepository>(
+    AiInsightRepositoryImpl(sl(), sl()),
+  );
+
+  // Use Cases
+  sl.registerSingleton<GetArticleInsightUseCase>(
+    GetArticleInsightUseCase(sl()),
+  );
+
+  // Cubit (factory — new instance per article detail screen)
+  sl.registerFactory<AiInsightCubit>(
+    () => AiInsightCubit(
+      getArticleInsightUseCase: sl(),
     ),
   );
 }

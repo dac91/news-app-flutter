@@ -4,6 +4,8 @@ import 'package:ionicons/ionicons.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../../core/constants/constants.dart';
 import '../../../../../injection_container.dart';
+import '../../../../../features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
+import '../../../../../features/ai_insight/presentation/widgets/ai_insight_panel.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
 import '../../bloc/article/local/local_article_event.dart';
@@ -23,8 +25,15 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+        ),
+        BlocProvider(
+          create: (_) => sl<AiInsightCubit>(),
+        ),
+      ],
       child: BlocListener<LocalArticleBloc, LocalArticlesState>(
         listener: _onLocalArticlesState,
         child: Scaffold(
@@ -76,6 +85,7 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
           _buildArticleTitleAndDate(),
           _buildArticleImage(),
           _buildArticleDescription(),
+          _buildAiInsightSection(),
         ],
       ),
     );
@@ -145,6 +155,21 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
         '${widget.article?.description ?? ''}\n\n${widget.article?.content ?? ''}',
         style: const TextStyle(fontSize: 16),
       ),
+    );
+  }
+
+  Widget _buildAiInsightSection() {
+    return AiInsightPanel(
+      articleUrl: widget.article?.url,
+      onRequestInsight: () {
+        context.read<AiInsightCubit>().getInsight(
+              title: widget.article?.title ?? '',
+              description: widget.article?.description,
+              content: widget.article?.content,
+              source: widget.article?.author,
+              url: widget.article?.url,
+            );
+      },
     );
   }
 

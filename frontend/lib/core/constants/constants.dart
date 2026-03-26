@@ -13,6 +13,18 @@ const String newsAPIKey = String.fromEnvironment(
   defaultValue: '',
 );
 
+/// Gemini API key injected at compile time via `--dart-define=GEMINI_API_KEY=<key>`.
+///
+/// Used by the AI Insight feature for article perspective context analysis.
+/// Free tier: 15 requests per minute, sufficient for article-level analysis.
+///
+/// Usage:
+///   flutter run --dart-define=GEMINI_API_KEY=your_key_here
+const String geminiAPIKey = String.fromEnvironment(
+  'GEMINI_API_KEY',
+  defaultValue: '',
+);
+
 const String countryQuery = 'us';
 const String categoryQuery = 'general';
 
