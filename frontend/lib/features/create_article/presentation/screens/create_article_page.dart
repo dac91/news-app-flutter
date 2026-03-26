@@ -55,9 +55,10 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
   final _authorController = TextEditingController();
   final _draftService = sl<DraftService>();
 
-  File? _selectedImage;
-  String? _uploadedImageUrl;
-  String? _selectedCategory;
+  /// Cached cubit reference for use in [dispose] and timer callbacks
+  /// where [context.read] is unavailable.
+  late final CreateArticleCubit _cubit;
+
   Timer? _autoSaveTimer;
 
   bool get _isEditMode => widget.articleToEdit != null;
@@ -75,6 +76,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
   @override
   void initState() {
     super.initState();
+    _cubit = context.read<CreateArticleCubit>();
     if (_isEditMode) {
       _prefillFromArticle();
     } else {
@@ -91,8 +93,8 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     _descriptionController.text = article.description;
     _contentController.text = article.content;
     _authorController.text = article.author;
-    _uploadedImageUrl = article.thumbnailUrl;
-    _selectedCategory = article.category;
+    _cubit.uploadedImageUrl = article.thumbnailUrl;
+    _cubit.selectedCategory = article.category;
   }
 
   @override
@@ -159,13 +161,11 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     );
 
     if (shouldRestore == true && mounted) {
-      setState(() {
-        _titleController.text = draft['title'] ?? '';
-        _descriptionController.text = draft['description'] ?? '';
-        _contentController.text = draft['content'] ?? '';
-        // Don't restore author from draft — always use authenticated user's name
-        _uploadedImageUrl = draft['imageUrl'];
-      });
+      _titleController.text = draft['title'] ?? '';
+      _descriptionController.text = draft['description'] ?? '';
+      _contentController.text = draft['content'] ?? '';
+      // Don't restore author from draft — always use authenticated user's name
+      _cubit.restoreDraftImageUrl(draft['imageUrl']);
     }
   }
 
@@ -175,7 +175,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       _titleController.text.trim().isNotEmpty ||
       _descriptionController.text.trim().isNotEmpty ||
       _contentController.text.trim().isNotEmpty ||
-      _uploadedImageUrl != null;
+      _cubit.uploadedImageUrl != null;
 
   void _saveDraftIfNeeded() {
     // Don't save drafts when editing an existing article
@@ -187,7 +187,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         description: _descriptionController.text,
         content: _contentController.text,
         author: _authorController.text,
-        imageUrl: _uploadedImageUrl,
+        imageUrl: _cubit.uploadedImageUrl,
       );
     }
   }
@@ -261,8 +261,8 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       builder: (context, state) {
         final isUploading = state is CreateArticleImageUploading;
         return ImagePickerWidget(
-          selectedImage: _selectedImage,
-          uploadedImageUrl: _uploadedImageUrl,
+          selectedImage: _cubit.selectedImage,
+          uploadedImageUrl: _cubit.uploadedImageUrl,
           isUploading: isUploading,
           onTap: _pickImage,
         );
@@ -311,7 +311,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: DropdownButtonFormField<String>(
-        value: _selectedCategory,
+        value: _cubit.selectedCategory,
         decoration: const InputDecoration(
           labelText: 'Category (optional)',
           border: OutlineInputBorder(),
@@ -319,7 +319,9 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         items: _categories.map((cat) {
           return DropdownMenuItem(value: cat.toLowerCase(), child: Text(cat));
         }).toList(),
-        onChanged: (value) => setState(() => _selectedCategory = value),
+        onChanged: (value) {
+          _cubit.selectedCategory = value;
+        },
       ),
     );
   }
@@ -329,7 +331,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       builder: (context, state) {
         final isSubmitting = state is CreateArticleSubmitting;
         final isUploading = state is CreateArticleImageUploading;
-        final hasImage = _uploadedImageUrl != null;
+        final hasImage = _cubit.uploadedImageUrl != null;
 
         return SubmitArticleButton(
           isLoading: isSubmitting || isUploading,
@@ -357,13 +359,9 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     if (pickedFile == null) return;
 
     final file = File(pickedFile.path);
-    setState(() {
-      _selectedImage = file;
-      _uploadedImageUrl = null;
-    });
 
     if (!mounted) return;
-    context.read<CreateArticleCubit>().uploadImage(file);
+    _cubit.pickAndUploadImage(file);
   }
 
   Future<ImageSource?> _showImageSourceDialog() async {
@@ -407,7 +405,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
 
   void _onSubmit() {
     if (!_formKey.currentState!.validate()) return;
-    if (_uploadedImageUrl == null) {
+    if (_cubit.uploadedImageUrl == null) {
       _showSnackBar('Please upload a thumbnail image first');
       return;
     }
@@ -416,27 +414,25 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     // The text field is read-only, but this enforces it server-side too.
     final author = _resolveAuthorName();
 
-    final cubit = context.read<CreateArticleCubit>();
-
     if (_isEditMode) {
-      cubit.updateArticle(
+      _cubit.updateArticle(
         id: widget.articleToEdit!.id!,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         content: _contentController.text.trim(),
         author: author,
-        imageUrl: _uploadedImageUrl!,
-        category: _selectedCategory,
+        imageUrl: _cubit.uploadedImageUrl!,
+        category: _cubit.selectedCategory,
         createdAt: widget.articleToEdit!.createdAt,
       );
     } else {
-      cubit.submitArticle(
+      _cubit.submitArticle(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         content: _contentController.text.trim(),
         author: author,
-        imageUrl: _uploadedImageUrl!,
-        category: _selectedCategory,
+        imageUrl: _cubit.uploadedImageUrl!,
+        category: _cubit.selectedCategory,
       );
     }
   }
@@ -462,9 +458,6 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
 
   void _onStateChanged(BuildContext context, CreateArticleState state) {
     if (state is CreateArticleImageUploaded) {
-      setState(() {
-        _uploadedImageUrl = state.imageUrl;
-      });
       _showSnackBar('Image uploaded successfully');
     }
 
@@ -475,12 +468,6 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     }
 
     if (state is CreateArticleError) {
-      // Preserve imageUrl if it existed before the error
-      if (state.imageUrl != null) {
-        setState(() {
-          _uploadedImageUrl = state.imageUrl;
-        });
-      }
       _showSnackBar(state.error.message ?? 'An error occurred');
     }
   }

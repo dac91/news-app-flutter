@@ -23,9 +23,9 @@ void main() {
           'Focuses on economic indicators; omits social impact.',
     };
 
-    group('fromJson', () {
+    group('fromRawData', () {
       test('creates model from complete JSON map', () {
-        final model = AiInsightModel.fromJson(tJson);
+        final model = AiInsightModel.fromRawData(tJson);
 
         expect(model.summaryBullets, tModel.summaryBullets);
         expect(model.tone, tModel.tone);
@@ -36,7 +36,7 @@ void main() {
       });
 
       test('handles missing summaryBullets gracefully', () {
-        final model = AiInsightModel.fromJson(const {
+        final model = AiInsightModel.fromRawData(const {
           'tone': 'critical',
           'toneExplanation': 'Explanation',
           'politicalLeaning': 'left',
@@ -48,7 +48,7 @@ void main() {
       });
 
       test('handles null string fields with defaults', () {
-        final model = AiInsightModel.fromJson(const {});
+        final model = AiInsightModel.fromRawData(const {});
 
         expect(model.summaryBullets, isEmpty);
         expect(model.tone, 'unknown');
@@ -59,7 +59,7 @@ void main() {
       });
 
       test('converts dynamic list items to strings', () {
-        final model = AiInsightModel.fromJson(const {
+        final model = AiInsightModel.fromRawData(const {
           'summaryBullets': [1, 2.5, true, 'text'],
           'tone': 'neutral',
         });
@@ -68,7 +68,7 @@ void main() {
       });
 
       test('handles missing politicalLeaning with unknown default', () {
-        final model = AiInsightModel.fromJson(const {
+        final model = AiInsightModel.fromRawData(const {
           'summaryBullets': ['Fact'],
           'tone': 'neutral',
           'toneExplanation': 'Balanced.',
@@ -88,7 +88,7 @@ void main() {
       });
 
       test('round-trips through fromJson/toJson', () {
-        final roundTripped = AiInsightModel.fromJson(tModel.toJson());
+        final roundTripped = AiInsightModel.fromRawData(tModel.toJson());
 
         expect(roundTripped, equals(tModel));
       });

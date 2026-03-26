@@ -21,8 +21,8 @@ class AiInsightModel extends AiInsightEntity {
           emphasisAnalysis: emphasisAnalysis,
         );
 
-  /// Creates an [AiInsightModel] from a JSON map (Firestore or parsed API).
-  factory AiInsightModel.fromJson(Map<String, dynamic> json) {
+  /// Creates an [AiInsightModel] from a raw data map (Firestore or parsed API).
+  factory AiInsightModel.fromRawData(Map<String, dynamic> json) {
     return AiInsightModel(
       summaryBullets: (json['summaryBullets'] as List<dynamic>?)
               ?.map((e) => e.toString())

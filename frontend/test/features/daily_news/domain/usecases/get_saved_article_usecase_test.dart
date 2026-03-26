@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:news_app_clean_architecture/core/resources/app_exception.dart';
+import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/article_repository.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_saved_article.dart';
@@ -31,42 +33,49 @@ void main() {
   ];
 
   group('GetSavedArticleUseCase', () {
-    test('returns list of saved articles on success', () async {
+    test('returns DataSuccess with list of saved articles on success', () async {
       // Arrange
       when(() => mockRepository.getSavedArticles())
-          .thenAnswer((_) async => tArticles);
+          .thenAnswer((_) async => const DataSuccess(tArticles));
 
       // Act
       final result = await useCase();
 
       // Assert
-      expect(result, equals(tArticles));
-      expect(result, hasLength(2));
+      expect(result, isA<DataSuccess<List<ArticleEntity>>>());
+      expect((result as DataSuccess).data, equals(tArticles));
+      expect(result.data, hasLength(2));
       verify(() => mockRepository.getSavedArticles()).called(1);
     });
 
-    test('returns empty list when no saved articles', () async {
+    test('returns DataSuccess with empty list when no saved articles', () async {
       // Arrange
       when(() => mockRepository.getSavedArticles())
-          .thenAnswer((_) async => []);
+          .thenAnswer((_) async => const DataSuccess(<ArticleEntity>[]));
 
       // Act
       final result = await useCase();
 
       // Assert
-      expect(result, isEmpty);
+      expect(result, isA<DataSuccess<List<ArticleEntity>>>());
+      expect((result as DataSuccess).data, isEmpty);
     });
 
-    test('propagates exception from repository', () async {
+    test('returns DataFailed when repository fails', () async {
       // Arrange
-      when(() => mockRepository.getSavedArticles())
-          .thenThrow(Exception('DB read failed'));
-
-      // Act & Assert
-      expect(
-        () => useCase(),
-        throwsA(isA<Exception>()),
+      const error = AppException(
+        message: 'DB read failed',
+        identifier: 'getSavedArticles',
       );
+      when(() => mockRepository.getSavedArticles())
+          .thenAnswer((_) async => const DataFailed(error));
+
+      // Act
+      final result = await useCase();
+
+      // Assert
+      expect(result, isA<DataFailed<List<ArticleEntity>>>());
+      expect((result as DataFailed).error?.message, 'DB read failed');
     });
   });
 }

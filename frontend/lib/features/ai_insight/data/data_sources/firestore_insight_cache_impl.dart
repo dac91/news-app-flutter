@@ -23,7 +23,7 @@ class FirestoreInsightCacheImpl implements InsightCacheDataSource {
       return null;
     }
 
-    return AiInsightModel.fromJson(doc.data()!);
+    return AiInsightModel.fromRawData(doc.data()!);
   }
 
   @override

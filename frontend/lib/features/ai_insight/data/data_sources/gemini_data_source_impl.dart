@@ -101,7 +101,7 @@ Rules:
 
     try {
       final json = jsonDecode(cleaned) as Map<String, dynamic>;
-      return AiInsightModel.fromJson(json);
+      return AiInsightModel.fromRawData(json);
     } catch (e) {
       throw FormatException(
         'Failed to parse Gemini response as JSON: $e\nRaw: $responseText',

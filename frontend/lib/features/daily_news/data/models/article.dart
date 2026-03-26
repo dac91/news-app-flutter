@@ -36,6 +36,13 @@ class ArticleModel extends ArticleEntity {
     );
   }
 
+  /// Alias for [fromJson] following the project's `fromRawData` convention.
+  ///
+  /// [fromJson] is retained because Retrofit generated code
+  /// (`news_api_service.g.dart`) calls it by that exact name.
+  factory ArticleModel.fromRawData(Map<String, dynamic> map) =>
+      ArticleModel.fromJson(map);
+
   factory ArticleModel.fromEntity(ArticleEntity entity) {
     return ArticleModel(
       id: entity.id,

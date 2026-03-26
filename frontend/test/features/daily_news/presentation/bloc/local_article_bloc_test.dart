@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:news_app_clean_architecture/core/resources/app_exception.dart';
+import 'package:news_app_clean_architecture/core/resources/data_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_saved_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/remove_article.dart';
@@ -52,7 +54,8 @@ void main() {
 
     test('emits LocalArticlesDone on GetSavedArticles success', () async {
       // Arrange
-      when(() => mockGetSaved()).thenAnswer((_) async => [tArticle]);
+      when(() => mockGetSaved())
+          .thenAnswer((_) async => const DataSuccess([tArticle]));
 
       final states = <LocalArticlesState>[];
       bloc.stream.listen(states.add);
@@ -69,7 +72,12 @@ void main() {
 
     test('emits LocalArticlesError on GetSavedArticles failure', () async {
       // Arrange
-      when(() => mockGetSaved()).thenThrow(Exception('DB read failed'));
+      when(() => mockGetSaved()).thenAnswer((_) async => const DataFailed(
+            AppException(
+              message: 'DB read failed',
+              identifier: 'getSavedArticles',
+            ),
+          ));
 
       final states = <LocalArticlesState>[];
       bloc.stream.listen(states.add);
@@ -85,11 +93,14 @@ void main() {
     });
 
     test('SaveArticle event saves then reloads articles', () async {
-      // Arrange — first getSaved() returns [] (duplicate check), second returns [tArticle] (reload)
+      // Arrange — first getSaved() returns DataSuccess([]) (duplicate check),
+      // second returns DataSuccess([tArticle]) (reload)
       var callCount = 0;
       when(() => mockGetSaved()).thenAnswer((_) async {
         callCount++;
-        return callCount == 1 ? [] : [tArticle];
+        return callCount == 1
+            ? const DataSuccess(<ArticleEntity>[])
+            : const DataSuccess([tArticle]);
       });
       when(() => mockSave(params: any(named: 'params')))
           .thenAnswer((_) async {});
@@ -108,11 +119,14 @@ void main() {
     });
 
     test('RemoveArticle event removes then reloads articles', () async {
-      // Arrange — first getSaved() returns [tArticle] (URL lookup), second returns [] (reload)
+      // Arrange — first getSaved() returns DataSuccess([tArticle]) (URL lookup),
+      // second returns DataSuccess([]) (reload)
       var callCount = 0;
       when(() => mockGetSaved()).thenAnswer((_) async {
         callCount++;
-        return callCount == 1 ? [tArticle] : [];
+        return callCount == 1
+            ? const DataSuccess([tArticle])
+            : const DataSuccess(<ArticleEntity>[]);
       });
       when(() => mockRemove(params: any(named: 'params')))
           .thenAnswer((_) async {});
@@ -133,7 +147,8 @@ void main() {
 
     test('emits LocalArticlesError when SaveArticle fails', () async {
       // Arrange — getSaved succeeds (no duplicates) but save throws
-      when(() => mockGetSaved()).thenAnswer((_) async => []);
+      when(() => mockGetSaved())
+          .thenAnswer((_) async => const DataSuccess(<ArticleEntity>[]));
       when(() => mockSave(params: any(named: 'params')))
           .thenThrow(Exception('Save failed'));
 
@@ -149,8 +164,9 @@ void main() {
     });
 
     test('emits LocalArticlesError when RemoveArticle fails', () async {
-      // Arrange — getSaved returns [tArticle] (URL lookup succeeds) but remove throws
-      when(() => mockGetSaved()).thenAnswer((_) async => [tArticle]);
+      // Arrange — getSaved returns DataSuccess([tArticle]) (URL lookup succeeds) but remove throws
+      when(() => mockGetSaved())
+          .thenAnswer((_) async => const DataSuccess([tArticle]));
       when(() => mockRemove(params: any(named: 'params')))
           .thenThrow(Exception('Remove failed'));
 

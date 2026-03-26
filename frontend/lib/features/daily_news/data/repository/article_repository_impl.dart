@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:news_app_clean_architecture/core/constants/constants.dart';
 import 'package:news_app_clean_architecture/core/resources/app_exception.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
@@ -15,7 +14,7 @@ import '../data_sources/remote/news_api_service.dart';
 class ArticleRepositoryImpl implements ArticleRepository {
   final NewsApiService _newsApiService;
   final AppDatabase _appDatabase;
-  final ConnectivityService _connectivityService;
+  final ConnectivityServiceBase _connectivityService;
 
   ArticleRepositoryImpl(
     this._newsApiService,
@@ -66,11 +65,10 @@ class ArticleRepositoryImpl implements ArticleRepository {
           ),
         );
       }
-    } on DioError catch (e) {
+    } catch (e) {
       return DataFailed(
         AppException(
-          message: e.message,
-          statusCode: e.response?.statusCode,
+          message: e.toString(),
           identifier: 'getNewsArticles',
         ),
       );
@@ -78,8 +76,18 @@ class ArticleRepositoryImpl implements ArticleRepository {
   }
 
   @override
-  Future<List<ArticleModel>> getSavedArticles() async {
-    return _appDatabase.articleDAO.getArticles();
+  Future<DataState<List<ArticleModel>>> getSavedArticles() async {
+    try {
+      final articles = await _appDatabase.articleDAO.getArticles();
+      return DataSuccess(articles);
+    } catch (e) {
+      return DataFailed(
+        AppException(
+          message: e.toString(),
+          identifier: 'getSavedArticles',
+        ),
+      );
+    }
   }
 
   @override
