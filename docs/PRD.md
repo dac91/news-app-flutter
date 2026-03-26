@@ -412,15 +412,15 @@ Article Detail → Scroll down → See "Get AI Insight" button
 | Phase | Description | Key Deliverables | Status |
 |-------|-------------|-----------------|--------|
 | **Phase 0** | Codebase analysis + research | PRD, USER_RESEARCH.md, FEATURE_TRACKING.md | **Complete** |
-| **Phase 1** | Fix existing code issues | Equatable crash, null safety, deprecated APIs, hardcoded key, architecture violations | Pending |
-| **Phase 2** | Firebase setup | Firebase project, FlutterFire CLI, `firebase_options.dart`, `Firebase.initializeApp()` | Pending |
-| **Phase 3** | Backend schema + rules | `DB_SCHEMA.md`, `firestore.rules`, `storage.rules` | Pending |
-| **Phase 4** | Domain layer (TDD) | `FirebaseArticleEntity`, `CreateArticleUseCase`, `UploadImageUseCase`, abstract repository | Pending |
-| **Phase 5** | Data layer (TDD) | Firestore data source, Storage data source, `FirebaseArticleModel`, repository impl | Pending |
-| **Phase 6** | Presentation layer (TDD) | `CreateArticleCubit`, Create Article page, form widgets, image picker, validation | Pending |
-| **Phase 7** | Integration + wiring | DI registration, route setup, FAB navigation, end-to-end testing | Pending |
-| **Phase 8** | Polish + overdelivery | Image compression, preview, autosave, microinteractions, accessibility | Pending |
-| **Phase 9** | Report + documentation | `REPORT.md`, final code review, cleanup | Pending |
+| **Phase 1** | Fix existing code issues | Equatable crash, null safety, deprecated APIs, hardcoded key, architecture violations | **Complete** |
+| **Phase 2** | Firebase setup | Firebase project, FlutterFire CLI, `firebase_options.dart`, `Firebase.initializeApp()` | **Complete** |
+| **Phase 3** | Backend schema + rules | `DB_SCHEMA.md`, `firestore.rules`, `storage.rules` | **Complete** |
+| **Phase 4** | Domain layer (TDD) | `FirebaseArticleEntity`, `CreateArticleUseCase`, `UploadImageUseCase`, abstract repository | **Complete** |
+| **Phase 5** | Data layer (TDD) | Firestore data source, Storage data source, `FirebaseArticleModel`, repository impl | **Complete** |
+| **Phase 6** | Presentation layer (TDD) | `CreateArticleCubit`, Create Article page, form widgets, image picker, validation | **Complete** |
+| **Phase 7** | Integration + wiring | DI registration, route setup, FAB navigation, end-to-end testing | **Complete** |
+| **Phase 8** | Polish + overdelivery | Image compression, preview, autosave, microinteractions, accessibility | **Complete** |
+| **Phase 9** | Report + documentation | `REPORT.md`, final code review, cleanup | **Complete** |
 
 ---
 

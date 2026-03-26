@@ -304,7 +304,7 @@ create_article/                   ai_insight/
 #### dd. Article Editing (O-002)
 **Functionality**: Full edit flow:
 - **Data Source**: `updateArticle()` and `getArticlesByOwner()` on Firestore data source
-- **Use Cases**: `UpdateArticleUseCase` and `GetArticlesByAuthorUseCase` (queries by `ownerUid`)
+- **Use Cases**: `UpdateArticleUseCase` and `GetArticlesByAuthorUseCase` (class name retained; now queries Firestore by `ownerUid` instead of author name)
 - **Cubit**: `updateArticle()` method on `CreateArticleCubit`, `MyArticlesCubit` for fetching owner's articles by `ownerUid`
 - **UI**: `CreateArticlePage` in edit mode (pre-filled fields, "Edit Article" title, calls `updateArticle` on submit), `MyArticlesScreen` with article list + edit buttons, "My Articles" tile in Profile screen
 - **Routes**: `/EditArticle` and `/MyArticles`
