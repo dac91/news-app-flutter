@@ -153,6 +153,7 @@ void main() {
         content: 'Test Content',
         author: 'Test Author',
         thumbnailUrl: imageUrl,
+        ownerUid: 'uid-123',
         createdAt: DateTime(2025, 1, 1),
       );
 
@@ -170,6 +171,7 @@ void main() {
           content: 'Test Content',
           author: 'Test Author',
           imageUrl: imageUrl,
+          ownerUid: 'uid-123',
         );
         await Future<void>.delayed(Duration.zero);
 
@@ -201,6 +203,7 @@ void main() {
           content: 'Test Content',
           author: 'Test Author',
           imageUrl: imageUrl,
+          ownerUid: 'uid-123',
         );
         await Future<void>.delayed(Duration.zero);
 
@@ -227,6 +230,7 @@ void main() {
           content: 'Test Content',
           author: 'Test Author',
           imageUrl: imageUrl,
+          ownerUid: 'uid-123',
         );
 
         final captured = verify(
@@ -242,6 +246,7 @@ void main() {
         expect(params.content, 'Test Content');
         expect(params.author, 'Test Author');
         expect(params.thumbnailUrl, imageUrl);
+        expect(params.ownerUid, 'uid-123');
       });
     });
 
@@ -254,6 +259,7 @@ void main() {
         content: 'Updated Content',
         author: 'Author',
         thumbnailUrl: imageUrl,
+        ownerUid: 'uid-123',
         category: 'technology',
         createdAt: DateTime(2026, 1, 1),
       );
@@ -273,6 +279,7 @@ void main() {
           content: 'Updated Content',
           author: 'Author',
           imageUrl: imageUrl,
+          ownerUid: 'uid-123',
           category: 'technology',
           createdAt: DateTime(2026, 1, 1),
         );
@@ -308,6 +315,7 @@ void main() {
           content: 'Content',
           author: 'Author',
           imageUrl: imageUrl,
+          ownerUid: 'uid-123',
         );
         await Future<void>.delayed(Duration.zero);
 
@@ -337,6 +345,7 @@ void main() {
           content: 'Content',
           author: 'Author',
           imageUrl: imageUrl,
+          ownerUid: 'uid-123',
         );
         await Future<void>.delayed(Duration.zero);
 

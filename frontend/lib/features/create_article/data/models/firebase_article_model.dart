@@ -14,6 +14,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
     required String content,
     required String author,
     required String thumbnailUrl,
+    required String ownerUid,
     String? category,
     DateTime? createdAt,
   }) : super(
@@ -23,6 +24,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
           content: content,
           author: author,
           thumbnailUrl: thumbnailUrl,
+          ownerUid: ownerUid,
           category: category,
           createdAt: createdAt,
         );
@@ -42,6 +44,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       content: data['content'] as String? ?? '',
       author: data['author'] as String? ?? '',
       thumbnailUrl: data['thumbnailURL'] as String? ?? '',
+      ownerUid: data['ownerUid'] as String? ?? '',
       category: data['category'] as String?,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
@@ -49,7 +52,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
     );
   }
 
-  /// Converts the model to a Firestore-compatible JSON map.
+  /// Converts the model to a Firestore-compatible JSON map for creation.
   ///
   /// Uses [FieldValue.serverTimestamp()] for `createdAt` to ensure
   /// the timestamp is set server-side (preventing client clock manipulation,
@@ -61,6 +64,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       'content': content,
       'author': author,
       'thumbnailURL': thumbnailUrl,
+      'ownerUid': ownerUid,
       if (category != null) 'category': category,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -68,8 +72,8 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
 
   /// Converts the model to a JSON map for Firestore updates.
   ///
-  /// Unlike [toJson], this does NOT overwrite `createdAt` since
-  /// the original creation timestamp should be preserved on edits.
+  /// Unlike [toJson], this does NOT overwrite `createdAt` or `ownerUid`
+  /// since those fields are immutable after creation (enforced by rules).
   Map<String, dynamic> toUpdateJson() {
     return {
       'title': title,
@@ -77,7 +81,9 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       'content': content,
       'author': author,
       'thumbnailURL': thumbnailUrl,
+      'ownerUid': ownerUid,
       if (category != null) 'category': category,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
     };
   }
 
@@ -90,6 +96,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       content: content,
       author: author,
       thumbnailUrl: thumbnailUrl,
+      ownerUid: ownerUid,
       category: category,
       createdAt: createdAt,
     );
@@ -104,6 +111,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       content: entity.content,
       author: entity.author,
       thumbnailUrl: entity.thumbnailUrl,
+      ownerUid: entity.ownerUid,
       category: entity.category,
       createdAt: entity.createdAt,
     );

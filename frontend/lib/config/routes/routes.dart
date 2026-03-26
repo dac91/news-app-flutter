@@ -57,7 +57,7 @@ class AppRoutes {
           BlocProvider(
             create: (_) => sl<MyArticlesCubit>(),
             child: MyArticlesScreen(
-              authorName: settings.arguments as String,
+              ownerUid: settings.arguments as String,
             ),
           ),
         );

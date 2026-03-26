@@ -413,6 +413,12 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     // Always use the authenticated user's display name as the author.
     // The text field is read-only, but this enforces it server-side too.
     final author = _resolveAuthorName();
+    final ownerUid = _resolveOwnerUid();
+
+    if (ownerUid == null) {
+      _showSnackBar('You must be signed in to publish an article');
+      return;
+    }
 
     if (_isEditMode) {
       _cubit.updateArticle(
@@ -422,6 +428,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         content: _contentController.text.trim(),
         author: author,
         imageUrl: _cubit.uploadedImageUrl!,
+        ownerUid: ownerUid,
         category: _cubit.selectedCategory,
         createdAt: widget.articleToEdit!.createdAt,
       );
@@ -432,6 +439,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         content: _contentController.text.trim(),
         author: author,
         imageUrl: _cubit.uploadedImageUrl!,
+        ownerUid: ownerUid,
         category: _cubit.selectedCategory,
       );
     }
@@ -452,6 +460,17 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     // Fallback: use whatever is in the field (edit mode) or 'Anonymous'
     final fieldValue = _authorController.text.trim();
     return fieldValue.isNotEmpty ? fieldValue : 'Anonymous';
+  }
+
+  /// Resolves the owner UID from the authenticated user.
+  ///
+  /// Returns null if the user is not authenticated (caller should guard).
+  String? _resolveOwnerUid() {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      return authState.user.uid;
+    }
+    return null;
   }
 
   // --- State listener ---

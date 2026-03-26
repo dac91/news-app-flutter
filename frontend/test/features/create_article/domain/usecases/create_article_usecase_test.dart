@@ -37,6 +37,7 @@ void main() {
     content: 'Test Content',
     author: 'Test Author',
     thumbnailUrl: 'https://example.com/image.jpg',
+    ownerUid: 'uid-123',
   );
 
   final tCreatedEntity = FirebaseArticleEntity(
@@ -46,6 +47,7 @@ void main() {
     content: tParams.content,
     author: tParams.author,
     thumbnailUrl: tParams.thumbnailUrl,
+    ownerUid: tParams.ownerUid,
     createdAt: DateTime(2026, 3, 25),
   );
 
@@ -103,6 +105,7 @@ void main() {
       expect(captured.content, equals(tParams.content));
       expect(captured.author, equals(tParams.author));
       expect(captured.thumbnailUrl, equals(tParams.thumbnailUrl));
+      expect(captured.ownerUid, equals(tParams.ownerUid));
       expect(captured.id, isNull);
       expect(captured.createdAt, isNull);
     });

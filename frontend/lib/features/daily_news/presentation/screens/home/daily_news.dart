@@ -40,6 +40,11 @@ class _DailyNewsState extends State<DailyNews> {
         return Scaffold(
           appBar: _buildAppbar(context),
           body: _buildBody(context, state),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => Navigator.pushNamed(context, '/CreateArticle'),
+            tooltip: 'Create Article',
+            child: const Icon(Icons.add),
+          ),
         );
       },
     );

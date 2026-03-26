@@ -11,14 +11,14 @@ import '../../../../config/theme/design_tokens.dart';
 /// Each article shows title, category, date, and an edit button that
 /// navigates to [CreateArticlePage] in edit mode.
 class MyArticlesScreen extends StatelessWidget {
-  final String authorName;
+  final String ownerUid;
 
-  const MyArticlesScreen({Key? key, required this.authorName}) : super(key: key);
+  const MyArticlesScreen({Key? key, required this.ownerUid}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // Trigger fetch on build
-    context.read<MyArticlesCubit>().fetchArticles(authorName);
+    context.read<MyArticlesCubit>().fetchArticles(ownerUid);
 
     return Scaffold(
       appBar: AppBar(
@@ -53,7 +53,7 @@ class MyArticlesScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        context.read<MyArticlesCubit>().fetchArticles(authorName);
+                        context.read<MyArticlesCubit>().fetchArticles(ownerUid);
                       },
                       child: const Text('Retry'),
                     ),
@@ -75,7 +75,7 @@ class MyArticlesScreen extends StatelessWidget {
             return RefreshIndicator(
               onRefresh: () => context
                   .read<MyArticlesCubit>()
-                  .fetchArticles(authorName),
+                  .fetchArticles(ownerUid),
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: state.articles.length,

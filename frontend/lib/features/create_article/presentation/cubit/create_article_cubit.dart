@@ -102,6 +102,7 @@ class CreateArticleCubit extends Cubit<CreateArticleState> {
     required String content,
     required String author,
     required String imageUrl,
+    required String ownerUid,
     String? category,
   }) async {
     emit(CreateArticleSubmitting(imageUrl: imageUrl));
@@ -113,6 +114,7 @@ class CreateArticleCubit extends Cubit<CreateArticleState> {
         content: content,
         author: author,
         thumbnailUrl: imageUrl,
+        ownerUid: ownerUid,
         category: category,
       ),
     );
@@ -135,6 +137,7 @@ class CreateArticleCubit extends Cubit<CreateArticleState> {
     required String content,
     required String author,
     required String imageUrl,
+    required String ownerUid,
     String? category,
     DateTime? createdAt,
   }) async {
@@ -149,6 +152,7 @@ class CreateArticleCubit extends Cubit<CreateArticleState> {
       content: content,
       author: author,
       thumbnailUrl: imageUrl,
+      ownerUid: ownerUid,
       category: category,
       createdAt: createdAt,
     );

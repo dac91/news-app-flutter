@@ -26,6 +26,7 @@ void main() {
       content: 'Content 1',
       author: 'John Doe',
       thumbnailUrl: 'https://example.com/1.jpg',
+      ownerUid: 'uid-john',
       createdAt: DateTime(2026, 3, 25),
     ),
     FirebaseArticleEntity(
@@ -35,29 +36,30 @@ void main() {
       content: 'Content 2',
       author: 'John Doe',
       thumbnailUrl: 'https://example.com/2.jpg',
+      ownerUid: 'uid-john',
       createdAt: DateTime(2026, 3, 24),
     ),
   ];
 
   group('GetArticlesByAuthorUseCase', () {
     test('returns DataSuccess with list of articles on success', () async {
-      when(() => mockRepository.getArticlesByAuthor('John Doe'))
+      when(() => mockRepository.getArticlesByOwner('uid-john'))
           .thenAnswer((_) async => DataSuccess(tArticles));
 
-      final result = await useCase(params: 'John Doe');
+      final result = await useCase(params: 'uid-john');
 
       expect(result, isA<DataSuccess<List<FirebaseArticleEntity>>>());
       expect(result.data!.length, 2);
       expect(result.data!.first.title, 'Article One');
-      verify(() => mockRepository.getArticlesByAuthor('John Doe')).called(1);
+      verify(() => mockRepository.getArticlesByOwner('uid-john')).called(1);
     });
 
-    test('returns DataSuccess with empty list when author has no articles',
+    test('returns DataSuccess with empty list when owner has no articles',
         () async {
-      when(() => mockRepository.getArticlesByAuthor('Unknown'))
+      when(() => mockRepository.getArticlesByOwner('uid-unknown'))
           .thenAnswer((_) async => const DataSuccess([]));
 
-      final result = await useCase(params: 'Unknown');
+      final result = await useCase(params: 'uid-unknown');
 
       expect(result, isA<DataSuccess<List<FirebaseArticleEntity>>>());
       expect(result.data, isEmpty);
@@ -67,12 +69,12 @@ void main() {
       const tException = AppException(
         message: 'Firestore error',
         statusCode: 500,
-        identifier: 'getArticlesByAuthor',
+        identifier: 'getArticlesByOwner',
       );
-      when(() => mockRepository.getArticlesByAuthor('John Doe'))
+      when(() => mockRepository.getArticlesByOwner('uid-john'))
           .thenAnswer((_) async => const DataFailed(tException));
 
-      final result = await useCase(params: 'John Doe');
+      final result = await useCase(params: 'uid-john');
 
       expect(result, isA<DataFailed<List<FirebaseArticleEntity>>>());
       expect(result.error!.message, 'Firestore error');

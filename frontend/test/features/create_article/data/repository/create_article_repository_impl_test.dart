@@ -76,6 +76,7 @@ void main() {
       content: 'Test Content',
       author: 'Test Author',
       thumbnailUrl: 'https://example.com/image.jpg',
+      ownerUid: 'uid-123',
     );
 
     final tCreatedModel = FirebaseArticleModel(
@@ -85,6 +86,7 @@ void main() {
       content: tEntity.content,
       author: tEntity.author,
       thumbnailUrl: tEntity.thumbnailUrl,
+      ownerUid: tEntity.ownerUid,
       createdAt: DateTime(2026, 3, 25),
     );
 
@@ -97,6 +99,7 @@ void main() {
       expect(result, isA<DataSuccess<FirebaseArticleEntity>>());
       expect(result.data!.id, equals('generated-id'));
       expect(result.data!.title, equals('Test Title'));
+      expect(result.data!.ownerUid, equals('uid-123'));
       verify(() => mockFirestoreDataSource.createArticle(any())).called(1);
     });
 
@@ -127,6 +130,48 @@ void main() {
       expect(captured.content, equals(tEntity.content));
       expect(captured.author, equals(tEntity.author));
       expect(captured.thumbnailUrl, equals(tEntity.thumbnailUrl));
+      expect(captured.ownerUid, equals(tEntity.ownerUid));
+    });
+  });
+
+  group('getArticlesByOwner', () {
+    final tModels = [
+      FirebaseArticleModel(
+        id: 'doc-1',
+        title: 'Article One',
+        description: 'Desc 1',
+        content: 'Content 1',
+        author: 'John Doe',
+        thumbnailUrl: 'https://example.com/1.jpg',
+        ownerUid: 'uid-john',
+        createdAt: DateTime(2026, 3, 25),
+      ),
+    ];
+
+    test('returns DataSuccess with list of entities on success', () async {
+      when(() => mockFirestoreDataSource.getArticlesByOwner('uid-john'))
+          .thenAnswer((_) async => tModels);
+
+      final result = await repository.getArticlesByOwner('uid-john');
+
+      expect(result, isA<DataSuccess<List<FirebaseArticleEntity>>>());
+      expect(result.data!.length, 1);
+      expect(result.data!.first.title, 'Article One');
+      expect(result.data!.first.ownerUid, 'uid-john');
+      verify(() => mockFirestoreDataSource.getArticlesByOwner('uid-john'))
+          .called(1);
+    });
+
+    test('returns DataFailed with AppException when Firestore throws',
+        () async {
+      when(() => mockFirestoreDataSource.getArticlesByOwner('uid-john'))
+          .thenThrow(Exception('Firestore error'));
+
+      final result = await repository.getArticlesByOwner('uid-john');
+
+      expect(result, isA<DataFailed<List<FirebaseArticleEntity>>>());
+      expect(result.error, isA<AppException>());
+      expect(result.error!.identifier, equals('getArticlesByOwner'));
     });
   });
 }

@@ -67,7 +67,7 @@ class ProfileScreen extends StatelessWidget {
               // Content section
               const _SectionHeader(title: 'Content'),
               const SizedBox(height: 8),
-              _MyArticlesTile(authorName: user.displayName ?? ''),
+              _MyArticlesTile(ownerUid: user.uid),
               const SizedBox(height: 24),
 
               // Theme section
@@ -96,9 +96,9 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _MyArticlesTile extends StatelessWidget {
-  final String authorName;
+  final String ownerUid;
 
-  const _MyArticlesTile({required this.authorName});
+  const _MyArticlesTile({required this.ownerUid});
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +109,7 @@ class _MyArticlesTile extends StatelessWidget {
         subtitle: const Text('View and edit your articles'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          Navigator.pushNamed(context, '/MyArticles', arguments: authorName);
+          Navigator.pushNamed(context, '/MyArticles', arguments: ownerUid);
         },
       ),
     );

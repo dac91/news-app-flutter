@@ -13,6 +13,7 @@ class FirebaseArticleEntity extends Equatable {
   final String content;
   final String author;
   final String thumbnailUrl;
+  final String ownerUid;
   final String? category;
   final DateTime? createdAt;
 
@@ -23,6 +24,7 @@ class FirebaseArticleEntity extends Equatable {
     required this.content,
     required this.author,
     required this.thumbnailUrl,
+    required this.ownerUid,
     this.category,
     this.createdAt,
   });
@@ -35,6 +37,7 @@ class FirebaseArticleEntity extends Equatable {
         content,
         author,
         thumbnailUrl,
+        ownerUid,
         category,
         createdAt,
       ];

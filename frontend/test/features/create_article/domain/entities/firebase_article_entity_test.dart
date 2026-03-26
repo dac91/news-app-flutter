@@ -11,6 +11,7 @@ void main() {
         content: 'Test Content',
         author: 'Test Author',
         thumbnailUrl: 'https://example.com/image.jpg',
+        ownerUid: 'uid-123',
       );
       const entity2 = FirebaseArticleEntity(
         id: '1',
@@ -19,6 +20,7 @@ void main() {
         content: 'Test Content',
         author: 'Test Author',
         thumbnailUrl: 'https://example.com/image.jpg',
+        ownerUid: 'uid-123',
       );
 
       expect(entity1, equals(entity2));
@@ -32,6 +34,7 @@ void main() {
         content: 'Content',
         author: 'Author',
         thumbnailUrl: 'https://example.com/a.jpg',
+        ownerUid: 'uid-1',
       );
       const entity2 = FirebaseArticleEntity(
         id: '2',
@@ -40,6 +43,7 @@ void main() {
         content: 'Content',
         author: 'Author',
         thumbnailUrl: 'https://example.com/b.jpg',
+        ownerUid: 'uid-2',
       );
 
       expect(entity1, isNot(equals(entity2)));
@@ -52,6 +56,7 @@ void main() {
         content: 'Content',
         author: 'Author',
         thumbnailUrl: 'https://example.com/img.jpg',
+        ownerUid: 'uid-123',
       );
 
       expect(entity.id, isNull);
@@ -67,6 +72,7 @@ void main() {
         content: 'C',
         author: 'A',
         thumbnailUrl: 'url',
+        ownerUid: 'uid-abc',
         category: 'technology',
         createdAt: now,
       );
@@ -78,6 +84,7 @@ void main() {
         'C',
         'A',
         'url',
+        'uid-abc',
         'technology',
         now,
       ]);
@@ -91,9 +98,33 @@ void main() {
         content: 'Content',
         author: 'Author',
         thumbnailUrl: 'https://example.com/img.jpg',
+        ownerUid: 'uid-123',
       );
 
       expect(entity.category, isNull);
+    });
+
+    test('entities with different ownerUid are not equal', () {
+      const entity1 = FirebaseArticleEntity(
+        id: '1',
+        title: 'Title',
+        description: 'Desc',
+        content: 'Content',
+        author: 'Author',
+        thumbnailUrl: 'https://example.com/img.jpg',
+        ownerUid: 'uid-1',
+      );
+      const entity2 = FirebaseArticleEntity(
+        id: '1',
+        title: 'Title',
+        description: 'Desc',
+        content: 'Content',
+        author: 'Author',
+        thumbnailUrl: 'https://example.com/img.jpg',
+        ownerUid: 'uid-2',
+      );
+
+      expect(entity1, isNot(equals(entity2)));
     });
   });
 }

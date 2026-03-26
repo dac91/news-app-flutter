@@ -73,18 +73,18 @@ class CreateArticleRepositoryImpl implements CreateArticleRepository {
   }
 
   @override
-  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByAuthor(
-    String authorName,
+  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByOwner(
+    String ownerUid,
   ) async {
     try {
       final models =
-          await _firestoreDataSource.getArticlesByAuthor(authorName);
+          await _firestoreDataSource.getArticlesByOwner(ownerUid);
       return DataSuccess(models.map((m) => m.toEntity()).toList());
     } catch (e) {
       return DataFailed(
         AppException(
           message: e.toString(),
-          identifier: 'getArticlesByAuthor',
+          identifier: 'getArticlesByOwner',
         ),
       );
     }

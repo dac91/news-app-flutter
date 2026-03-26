@@ -9,33 +9,75 @@ service cloud.firestore {
       // Anyone can read articles (no auth required for v1)
       allow read: if true;
 
-      // Anyone can create articles, but the document must pass schema validation
-      allow create: if isValidArticle(request.resource.data);
+      // Authenticated users can create articles that pass schema validation.
+      // The ownerUid field must match the authenticated user's UID.
+      allow create: if request.auth != null
+        && isValidArticle(request.resource.data)
+        && request.resource.data.ownerUid == request.auth.uid;
 
-      // No updates or deletes in v1 (articles are immutable once published)
-      allow update, delete: if false;
+      // Only the article owner can update, and only mutable fields.
+      // ownerUid, createdAt are immutable after creation.
+      allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && isValidArticleUpdate(request.resource.data, resource.data);
+
+      // No deletes in v1 (articles are permanent once published)
+      allow delete: if false;
     }
 
-    // ── Schema validation function ───────────────────────────────────
+    // ── Schema validation for article creation ───────────────────────
     function isValidArticle(data) {
-      return data.keys().hasAll(['title', 'description', 'content', 'author', 'thumbnailURL', 'createdAt'])
-        && data.keys().hasOnly(['title', 'description', 'content', 'author', 'thumbnailURL', 'createdAt'])
+      let requiredFields = ['title', 'description', 'content', 'author', 'thumbnailURL', 'ownerUid', 'createdAt'];
+      let optionalFields = ['category'];
+      let allAllowed = ['title', 'description', 'content', 'author', 'thumbnailURL', 'ownerUid', 'createdAt', 'category'];
+
+      return data.keys().hasAll(requiredFields)
+        && data.keys().hasOnly(allAllowed)
         // Type checks
         && data.title is string
         && data.description is string
         && data.content is string
         && data.author is string
         && data.thumbnailURL is string
+        && data.ownerUid is string
         && data.createdAt is timestamp
         // Length constraints
         && data.title.size() >= 1 && data.title.size() <= 200
         && data.description.size() >= 1 && data.description.size() <= 500
         && data.content.size() >= 1 && data.content.size() <= 10000
         && data.author.size() >= 1 && data.author.size() <= 100
-        // thumbnailURL must be a non-empty string (full URL validation not possible in rules)
+        && data.ownerUid.size() >= 1
+        // thumbnailURL must be a non-empty string
         && data.thumbnailURL.size() >= 1
         // createdAt must be the server timestamp (prevents client clock manipulation)
-        && data.createdAt == request.time;
+        && data.createdAt == request.time
+        // category is optional; if present, must be a non-empty string
+        && (!('category' in data.keys()) || (data.category is string && data.category.size() >= 1 && data.category.size() <= 50));
+    }
+
+    // ── Schema validation for article updates ────────────────────────
+    // Ensures ownerUid and createdAt are immutable; validates mutable fields.
+    function isValidArticleUpdate(newData, existingData) {
+      let allAllowed = ['title', 'description', 'content', 'author', 'thumbnailURL', 'ownerUid', 'createdAt', 'category'];
+
+      return newData.keys().hasOnly(allAllowed)
+        // Immutable fields must not change
+        && newData.ownerUid == existingData.ownerUid
+        && newData.createdAt == existingData.createdAt
+        // Type checks on mutable fields
+        && newData.title is string
+        && newData.description is string
+        && newData.content is string
+        && newData.author is string
+        && newData.thumbnailURL is string
+        // Length constraints
+        && newData.title.size() >= 1 && newData.title.size() <= 200
+        && newData.description.size() >= 1 && newData.description.size() <= 500
+        && newData.content.size() >= 1 && newData.content.size() <= 10000
+        && newData.author.size() >= 1 && newData.author.size() <= 100
+        && newData.thumbnailURL.size() >= 1
+        // category is optional; if present, must be a non-empty string
+        && (!('category' in newData.keys()) || (newData.category is string && newData.category.size() >= 1 && newData.category.size() <= 50));
     }
 
     // ── ai_insights collection (AI-generated article analysis cache) ─
@@ -54,13 +96,16 @@ service cloud.firestore {
 
     // ── AI insight schema validation ─────────────────────────────────
     function isValidInsight(data) {
-      return data.keys().hasAll(['summaryBullets', 'tone', 'toneExplanation', 'sourceContext', 'emphasisAnalysis'])
+      return data.keys().hasAll(['summaryBullets', 'tone', 'toneExplanation', 'politicalLeaning', 'sourceContext', 'emphasisAnalysis'])
+        && data.keys().hasOnly(['summaryBullets', 'tone', 'toneExplanation', 'politicalLeaning', 'sourceContext', 'emphasisAnalysis'])
         && data.tone is string
         && data.toneExplanation is string
+        && data.politicalLeaning is string
         && data.sourceContext is string
         && data.emphasisAnalysis is string
         && data.summaryBullets is list
         && data.tone.size() >= 1 && data.tone.size() <= 50
+        && data.politicalLeaning.size() >= 1 && data.politicalLeaning.size() <= 100
         && data.toneExplanation.size() >= 1 && data.toneExplanation.size() <= 2000
         && data.sourceContext.size() >= 1 && data.sourceContext.size() <= 2000
         && data.emphasisAnalysis.size() >= 1 && data.emphasisAnalysis.size() <= 2000

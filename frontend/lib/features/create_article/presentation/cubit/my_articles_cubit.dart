@@ -26,9 +26,9 @@ class MyArticlesError extends MyArticlesState {
   const MyArticlesError({required this.message});
 }
 
-/// Cubit that fetches articles authored by the current user.
+/// Cubit that fetches articles owned by the current user.
 ///
-/// Uses [GetArticlesByAuthorUseCase] to query Firestore by author name.
+/// Uses [GetArticlesByAuthorUseCase] to query Firestore by owner UID.
 class MyArticlesCubit extends Cubit<MyArticlesState> {
   final GetArticlesByAuthorUseCase _getArticlesByAuthorUseCase;
 
@@ -37,15 +37,15 @@ class MyArticlesCubit extends Cubit<MyArticlesState> {
   })  : _getArticlesByAuthorUseCase = getArticlesByAuthorUseCase,
         super(const MyArticlesInitial());
 
-  /// Fetches articles for the given [authorName].
-  Future<void> fetchArticles(String authorName) async {
-    if (authorName.isEmpty) return;
+  /// Fetches articles for the given [ownerUid].
+  Future<void> fetchArticles(String ownerUid) async {
+    if (ownerUid.isEmpty) return;
 
     emit(const MyArticlesLoading());
 
     try {
       final result = await _getArticlesByAuthorUseCase.call(
-        params: authorName,
+        params: ownerUid,
       );
 
       if (result is DataSuccess<List<FirebaseArticleEntity>>) {

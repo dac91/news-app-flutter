@@ -35,6 +35,7 @@ class MockCreateArticleRepositoryImpl implements CreateArticleRepository {
       content: article.content,
       author: article.author,
       thumbnailUrl: article.thumbnailUrl,
+      ownerUid: article.ownerUid,
       category: article.category,
       createdAt: DateTime.now(),
     );
@@ -56,12 +57,12 @@ class MockCreateArticleRepositoryImpl implements CreateArticleRepository {
   }
 
   @override
-  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByAuthor(
-    String authorName,
+  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByOwner(
+    String ownerUid,
   ) async {
     await Future.delayed(const Duration(milliseconds: 100));
     final filtered =
-        _articles.where((a) => a.author == authorName).toList();
+        _articles.where((a) => a.ownerUid == ownerUid).toList();
     return DataSuccess(filtered);
   }
 }

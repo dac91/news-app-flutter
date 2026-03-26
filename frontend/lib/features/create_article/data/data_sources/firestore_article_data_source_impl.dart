@@ -48,12 +48,12 @@ class FirestoreArticleDataSourceImpl implements FirestoreArticleDataSource {
   }
 
   @override
-  Future<List<FirebaseArticleModel>> getArticlesByAuthor(
-    String authorName,
+  Future<List<FirebaseArticleModel>> getArticlesByOwner(
+    String ownerUid,
   ) async {
     final snapshot = await _firestore
         .collection(_collectionName)
-        .where('author', isEqualTo: authorName)
+        .where('ownerUid', isEqualTo: ownerUid)
         .orderBy('createdAt', descending: true)
         .get();
 

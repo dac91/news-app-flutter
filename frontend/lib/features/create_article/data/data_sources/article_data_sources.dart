@@ -18,8 +18,8 @@ abstract class FirestoreArticleDataSource {
   /// Returns the updated [FirebaseArticleModel] with the latest data.
   Future<FirebaseArticleModel> updateArticle(FirebaseArticleModel model);
 
-  /// Fetches all articles authored by the given [authorName].
-  Future<List<FirebaseArticleModel>> getArticlesByAuthor(String authorName);
+  /// Fetches all articles owned by the given [ownerUid].
+  Future<List<FirebaseArticleModel>> getArticlesByOwner(String ownerUid);
 }
 
 /// Abstract interface for Cloud Storage image operations.

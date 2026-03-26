@@ -30,6 +30,7 @@ void main() {
       content: 'Content 1',
       author: 'John Doe',
       thumbnailUrl: 'https://example.com/1.jpg',
+      ownerUid: 'uid-john',
       createdAt: DateTime(2026, 3, 25),
     ),
     FirebaseArticleEntity(
@@ -39,6 +40,7 @@ void main() {
       content: 'Content 2',
       author: 'John Doe',
       thumbnailUrl: 'https://example.com/2.jpg',
+      ownerUid: 'uid-john',
       createdAt: DateTime(2026, 3, 24),
     ),
   ];
@@ -49,13 +51,13 @@ void main() {
     });
 
     test('emits [Loading, Loaded] on successful fetch', () async {
-      when(() => mockUseCase.call(params: 'John Doe'))
+      when(() => mockUseCase.call(params: 'uid-john'))
           .thenAnswer((_) async => DataSuccess(tArticles));
 
       final states = <MyArticlesState>[];
       final subscription = cubit.stream.listen(states.add);
 
-      await cubit.fetchArticles('John Doe');
+      await cubit.fetchArticles('uid-john');
       await Future<void>.delayed(Duration.zero);
 
       expect(states.length, 2);
@@ -67,13 +69,13 @@ void main() {
     });
 
     test('emits [Loading, Loaded] with empty list when no articles', () async {
-      when(() => mockUseCase.call(params: 'Nobody'))
+      when(() => mockUseCase.call(params: 'uid-nobody'))
           .thenAnswer((_) async => const DataSuccess([]));
 
       final states = <MyArticlesState>[];
       final subscription = cubit.stream.listen(states.add);
 
-      await cubit.fetchArticles('Nobody');
+      await cubit.fetchArticles('uid-nobody');
       await Future<void>.delayed(Duration.zero);
 
       expect(states.length, 2);
@@ -87,15 +89,15 @@ void main() {
     test('emits [Loading, Error] on failure', () async {
       const tException = AppException(
         message: 'Network error',
-        identifier: 'getArticlesByAuthor',
+        identifier: 'getArticlesByOwner',
       );
-      when(() => mockUseCase.call(params: 'John Doe'))
+      when(() => mockUseCase.call(params: 'uid-john'))
           .thenAnswer((_) async => const DataFailed(tException));
 
       final states = <MyArticlesState>[];
       final subscription = cubit.stream.listen(states.add);
 
-      await cubit.fetchArticles('John Doe');
+      await cubit.fetchArticles('uid-john');
       await Future<void>.delayed(Duration.zero);
 
       expect(states.length, 2);
@@ -106,7 +108,7 @@ void main() {
       await subscription.cancel();
     });
 
-    test('does not emit when authorName is empty', () async {
+    test('does not emit when ownerUid is empty', () async {
       final states = <MyArticlesState>[];
       final subscription = cubit.stream.listen(states.add);
 
@@ -119,13 +121,13 @@ void main() {
     });
 
     test('handles exception thrown by use case', () async {
-      when(() => mockUseCase.call(params: 'John Doe'))
+      when(() => mockUseCase.call(params: 'uid-john'))
           .thenThrow(Exception('Unexpected'));
 
       final states = <MyArticlesState>[];
       final subscription = cubit.stream.listen(states.add);
 
-      await cubit.fetchArticles('John Doe');
+      await cubit.fetchArticles('uid-john');
       await Future<void>.delayed(Duration.zero);
 
       expect(states.length, 2);

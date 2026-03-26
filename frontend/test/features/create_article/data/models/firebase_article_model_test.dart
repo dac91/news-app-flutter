@@ -11,6 +11,7 @@ void main() {
       content: 'Test Content',
       author: 'Test Author',
       thumbnailUrl: 'https://example.com/image.jpg',
+      ownerUid: 'uid-123',
     );
 
     test('extends FirebaseArticleEntity', () {
@@ -25,6 +26,7 @@ void main() {
           'content': 'Content',
           'author': 'Author',
           'thumbnailURL': 'https://example.com/img.jpg',
+          'ownerUid': 'uid-456',
           'createdAt': null,
         };
 
@@ -36,6 +38,7 @@ void main() {
         expect(model.content, equals('Content'));
         expect(model.author, equals('Author'));
         expect(model.thumbnailUrl, equals('https://example.com/img.jpg'));
+        expect(model.ownerUid, equals('uid-456'));
         expect(model.createdAt, isNull);
       });
 
@@ -49,6 +52,7 @@ void main() {
         expect(model.content, equals(''));
         expect(model.author, equals(''));
         expect(model.thumbnailUrl, equals(''));
+        expect(model.ownerUid, equals(''));
       });
     });
 
@@ -61,6 +65,7 @@ void main() {
         expect(json['content'], equals('Test Content'));
         expect(json['author'], equals('Test Author'));
         expect(json['thumbnailURL'], equals('https://example.com/image.jpg'));
+        expect(json['ownerUid'], equals('uid-123'));
         // createdAt is FieldValue.serverTimestamp() — can't compare directly,
         // but we can verify the key exists
         expect(json.containsKey('createdAt'), isTrue);
@@ -71,9 +76,25 @@ void main() {
         expect(json.containsKey('id'), isFalse);
       });
 
-      test('contains exactly 6 fields', () {
+      test('contains exactly 7 fields (without category)', () {
         final json = tModel.toJson();
-        expect(json.keys.length, equals(6));
+        expect(json.keys.length, equals(7));
+      });
+
+      test('includes category when present', () {
+        const modelWithCategory = FirebaseArticleModel(
+          id: 'doc-123',
+          title: 'Test Title',
+          description: 'Test Description',
+          content: 'Test Content',
+          author: 'Test Author',
+          thumbnailUrl: 'https://example.com/image.jpg',
+          ownerUid: 'uid-123',
+          category: 'technology',
+        );
+        final json = modelWithCategory.toJson();
+        expect(json['category'], equals('technology'));
+        expect(json.keys.length, equals(8));
       });
     });
 
@@ -88,6 +109,7 @@ void main() {
         expect(entity.content, equals('Test Content'));
         expect(entity.author, equals('Test Author'));
         expect(entity.thumbnailUrl, equals('https://example.com/image.jpg'));
+        expect(entity.ownerUid, equals('uid-123'));
       });
     });
 
@@ -100,6 +122,7 @@ void main() {
           content: 'Entity Content',
           author: 'Entity Author',
           thumbnailUrl: 'https://example.com/entity.jpg',
+          ownerUid: 'uid-entity',
         );
 
         final model = FirebaseArticleModel.fromEntity(entity);
@@ -108,6 +131,7 @@ void main() {
         expect(model.id, equals('entity-id'));
         expect(model.title, equals('Entity Title'));
         expect(model.description, equals('Entity Desc'));
+        expect(model.ownerUid, equals('uid-entity'));
       });
     });
   });

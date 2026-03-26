@@ -158,15 +158,15 @@ create_article/                   ai_insight/
 ```
 
 ### Test Coverage
-185 tests across all layers — all passing:
+189 tests across all layers — all passing:
 - **Auth Domain**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data**: 5 tests (model conversion, Firebase user mapping, equality)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
-- **Create Article Domain**: 12 tests (create/upload/update/getByAuthor use cases)
-- **Create Article Data**: 13 tests (model serialization, repository success/failure, entity-model conversion)
+- **Create Article Domain**: 13 tests (create/upload/update/getByOwner use cases)
+- **Create Article Data**: 15 tests (model serialization incl. ownerUid/category, repository success/failure/getByOwner, entity-model conversion)
 - **Create Article Presentation — Cubit**: 17 tests (state transitions for create/update/upload/reset, error handling, null use case guard)
 - **Create Article Presentation — Widgets**: 23 tests (ArticleTextField: 9 incl. readOnly, ImagePickerWidget: 7, SubmitArticleButton: 7)
-- **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty author guard)
+- **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty ownerUid guard)
 - **Daily News Domain**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
 - **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
 - **AI Insight Domain**: 19 tests (entity equality/props: 5, params equality/cacheKey: 10, use case success/failure/null-guard: 4)
@@ -188,7 +188,7 @@ create_article/                   ai_insight/
 **Details**: 21 verified source URLs with dates and reliability ratings.
 
 #### c. Comprehensive Firestore Security Rules
-**Functionality**: Server-side schema validation in `backend/firestore.rules` — field presence checks, type validation, string length constraints (matching the DB schema), server timestamp enforcement, and immutability rules for `createdAt`.
+**Functionality**: Server-side schema validation in `backend/firestore.rules` — field presence checks, type validation, string length constraints (matching the DB schema), server timestamp enforcement, `ownerUid`-based ownership (`request.auth.uid`) on create/update, immutability for `ownerUid` and `createdAt`, and `category` validation.
 **Purpose**: Client-side validation is a UX convenience; server-side validation is security. Both are required.
 
 #### d. Image Source Selection (Gallery + Camera)
@@ -303,12 +303,13 @@ create_article/                   ai_insight/
 
 #### dd. Article Editing (O-002)
 **Functionality**: Full edit flow:
-- **Data Source**: `updateArticle()` and `getArticlesByAuthor()` on Firestore data source
+- **Data Source**: `updateArticle()` and `getArticlesByOwner()` on Firestore data source
 - **Use Cases**: `UpdateArticleUseCase` and `GetArticlesByAuthorUseCase`
-- **Cubit**: `updateArticle()` method on `CreateArticleCubit`, `MyArticlesCubit` for fetching author's articles
+- **Cubit**: `updateArticle()` method on `CreateArticleCubit`, `MyArticlesCubit` for fetching owner's articles by `ownerUid`
 - **UI**: `CreateArticlePage` in edit mode (pre-filled fields, "Edit Article" title, calls `updateArticle` on submit), `MyArticlesScreen` with article list + edit buttons, "My Articles" tile in Profile screen
 - **Routes**: `/EditArticle` and `/MyArticles`
-- **Tests**: 13 new tests (4 update use case, 5 getByAuthor use case, 3 updateArticle cubit, 6 MyArticlesCubit = sums to 18)
+- **Firestore Rules**: Owner-based auth — only the article creator (`ownerUid == request.auth.uid`) can update; `ownerUid` and `createdAt` are immutable
+- **Tests**: 18 tests (4 update use case, 5 getByOwner use case, 3 updateArticle cubit, 6 MyArticlesCubit)
 
 **Purpose**: Creating content without the ability to correct it is incomplete. Edit support closes the content lifecycle loop.
 
@@ -376,6 +377,7 @@ create_article/                   ai_insight/
 | `3733b80` | feat: add politicalLeaning field to AI Insight + fix light theme contrast (183/183 tests) |
 | `56f7c6f` | fix: make author field read-only to prevent impersonation (185/185 tests) |
 | `f58166f` | fix: resolve compliance audit flags — model inheritance, dead deps, font assets (185/185 tests) |
+| *pending* | fix: resolve 6 audit findings — ownerUid enforcement, Firestore rules rewrite, FAB, smoke test (189/189 tests) |
 
 ### Architecture Decisions Record
 
@@ -398,13 +400,13 @@ create_article/                   ai_insight/
 | Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 185 (all passing)
+- **Total tests**: 189 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 60+ (production code, tests, documentation)
-- **Features implemented**: 123 of 127 tracked items (97%)
-- **Architecture violations fixed**: 6 (in existing code) + 9 compliance fixes
+- **Features implemented**: 129 of 133 tracked items (97%)
+- **Architecture violations fixed**: 6 (in existing code) + 9 compliance fixes + 6 audit findings
 - **Null safety fixes**: 5 files with force-unwrap operators replaced with safe alternatives
-- **Security fixes**: 3 (NewsAPI key + Gemini API key moved out of source control via `--dart-define`, author field impersonation prevention)
+- **Security fixes**: 4 (NewsAPI key + Gemini API key moved out of source control via `--dart-define`, author field impersonation prevention, `ownerUid`-based ownership enforcement in Firestore rules)
 - **Documentation pages created**: 8 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`)
-- **Feature tracking**: 123 of 127 items complete (97%), 4 deferred (low priority / out of scope)
+- **Feature tracking**: 129 of 133 items complete (97%), 4 deferred (low priority / out of scope)
 - **External APIs integrated**: 3 (NewsAPI, Firebase, Google Gemini)

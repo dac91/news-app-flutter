@@ -65,10 +65,10 @@
 
 | # | Feature | Description | Status | Priority |
 |---|---------|-------------|--------|----------|
-| N-008 | Firebase Article Entity | `FirebaseArticleEntity` — Equatable, pure Dart, 7 fields | DONE | High |
+| N-008 | Firebase Article Entity | `FirebaseArticleEntity` — Equatable, pure Dart, 8 fields (including `ownerUid`) | DONE | High |
 | N-009 | Create Article Use Case | `CreateArticleUseCase` — delegates to repository | DONE | High |
 | N-010 | Upload Image Use Case | `UploadArticleImageUseCase` — delegates to repository | DONE | High |
-| N-011 | Create Article Repository (Abstract) | `CreateArticleRepository` — 2 methods (createArticle, uploadImage) | DONE | High |
+| N-011 | Create Article Repository (Abstract) | `CreateArticleRepository` — 4 methods (createArticle, updateArticle, uploadImage, getArticlesByOwner) | DONE | High |
 | N-012 | Param Classes | `CreateArticleParams`, `UploadArticleImageParams` — Equatable | DONE | High |
 
 ### 2.3 Frontend — Presentation Layer
@@ -80,7 +80,7 @@
 | N-015 | Image Picker Widget | `ImagePickerWidget` — placeholder, upload, preview, change states | DONE | High |
 | N-016 | Form Validation | Client-side required field validation matching Firestore schema lengths | DONE | High |
 | N-017 | Upload Progress Indicator | `CupertinoActivityIndicator` during image upload and article submission | DONE | Medium |
-| N-018 | FAB Navigation to Add Article | FAB wired to `Navigator.pushNamed(context, '/CreateArticle')` | DONE | High |
+| N-018 | FAB Navigation to Add Article | FAB on home screen wired to `Navigator.pushNamed(context, '/CreateArticle')` | DONE | High |
 | N-019 | Success/Error Feedback | SnackBar for errors/upload success, AlertDialog for publish success | DONE | Medium |
 
 ### 2.4 Frontend — Data Layer
@@ -89,7 +89,7 @@
 |---|---------|-------------|--------|----------|
 | N-020 | Firestore Article Data Source | `FirestoreArticleDataSourceImpl` — add() + read-back for server timestamp | DONE | High |
 | N-021 | Cloud Storage Data Source | `StorageArticleDataSourceImpl` — upload with timestamp-prefixed filenames | DONE | High |
-| N-022 | Firebase Article Model | `FirebaseArticleModel` — fromRawData, toJson, toEntity, fromEntity | DONE | High |
+| N-022 | Firebase Article Model | `FirebaseArticleModel` — fromRawData, toJson, toUpdateJson, toEntity, fromEntity (includes `ownerUid` and `category`) | DONE | High |
 | N-023 | Create Article Repository Impl | `CreateArticleRepositoryImpl` — orchestrates data sources, catches → AppException | DONE | High |
 | N-024 | DI Registration (New Feature) | All new classes registered in `injection_container.dart` via GetIt | DONE | High |
 
@@ -153,11 +153,11 @@
 
 | # | Improvement | Description | Status | Priority | File(s) |
 |---|------------|-------------|--------|----------|---------|
-| T-021 | Add Unit Tests for New Use Cases | 12 tests covering create + upload + update + getByAuthor use cases | DONE | High | `test/features/create_article/domain/usecases/` |
+| T-021 | Add Unit Tests for New Use Cases | 13 tests covering create + upload + update + getByOwner use cases | DONE | High | `test/features/create_article/domain/usecases/` |
 | T-022 | Add Unit Tests for Cubit | 17 tests covering all state transitions (create, update, upload, reset) | DONE | High | `test/features/create_article/presentation/cubit/` |
-| T-023 | Add Unit Tests for Repository | 5 tests covering success/failure/model conversion | DONE | Medium | `test/features/create_article/data/repository/` |
+| T-023 | Add Unit Tests for Repository | 7 tests covering success/failure/model conversion/getArticlesByOwner | DONE | Medium | `test/features/create_article/data/repository/` |
 | T-024 | Add Model Tests | 8 tests covering serialization, entity conversion | DONE | Medium | `test/features/create_article/data/models/` |
-| T-025 | Add Entity Tests | 5 tests covering equality, nullable fields, props, category | DONE | Medium | `test/features/create_article/domain/entities/` |
+| T-025 | Add Entity Tests | 6 tests covering equality, nullable fields, props, category, ownerUid | DONE | Medium | `test/features/create_article/domain/entities/` |
 | T-026 | Add Widget Tests | 23 widget tests for ArticleTextField (9 incl. readOnly), ImagePickerWidget (7), SubmitArticleButton (7) | DONE | Medium | `test/features/create_article/presentation/widgets/` |
 | T-027 | Add Auth Tests | 32 tests for UserEntity (4), UserModel (5), auth use cases (10), AuthCubit (13) | DONE | High | `test/features/auth/` |
 | T-028 | Add MyArticlesCubit Tests | 6 tests for my articles fetch/error/empty/exception handling | DONE | Medium | `test/features/create_article/presentation/cubit/` |
@@ -180,6 +180,12 @@
 | T-039 | Remove Dead Muli Font Assets | Removed `fonts:` section from `pubspec.yaml` (all typography uses google_fonts) | DONE | Low | `pubspec.yaml` |
 | T-040 | Make Author Field Read-Only | Author field `readOnly: true` with lock icon, pre-filled from AuthCubit; `_resolveAuthorName()` fallback chain | DONE | Medium | `create_article_page.dart`, `article_text_field.dart` |
 | T-041 | Add politicalLeaning to AI Insight | Added field to entity, model, Gemini prompt, Firestore cache, UI panel; political leaning badge in bottom sheet | DONE | Medium | `ai_insight/` (all layers) |
+| T-042 | Fix Firestore rules: allow owner-based updates | Rewrote `firestore.rules` with `ownerUid == request.auth.uid` for create/update, immutability for `ownerUid`/`createdAt` | DONE | High | `backend/firestore.rules` |
+| T-043 | Add `category` to Firestore rules | Added `category` to `hasOnly` whitelist with type/length validation | DONE | High | `backend/firestore.rules` |
+| T-044 | Add `ownerUid` through full stack | Added `ownerUid` field to entity, params, model, data sources, repository, cubit, UI; queries by UID instead of display name | DONE | High | `create_article/` (all layers) |
+| T-045 | Fix AI insight cache rules | Added `politicalLeaning` to allowed fields in `ai_insights` Firestore rules | DONE | Medium | `backend/firestore.rules` |
+| T-046 | Add FAB to home screen | Added `FloatingActionButton` with `Icons.add` to `daily_news.dart` navigating to `/CreateArticle` | DONE | High | `daily_news.dart` |
+| T-047 | Strengthen integration smoke test | Added `Scaffold` and `BottomNavigationBar` assertions to `app_smoke_test.dart` | DONE | Low | `integration_test/app_smoke_test.dart` |
 
 ### 3.8 AI Insight Feature
 
@@ -251,12 +257,12 @@
 | Core Features (Existing) | 7 | 7 | 0 | 0 | 0 |
 | Architecture (Existing) | 9 | 9 | 0 | 0 | 0 |
 | New Features (Required) | 27 | 27 | 0 | 0 | 0 |
-| Technical Improvements | 42 | 42 | 0 | 0 | 0 |
+| Technical Improvements | 48 | 48 | 0 | 0 | 0 |
 | AI Insight Feature | 15 | 15 | 0 | 0 | 0 |
 | UI Improvements | 10 | 10 | 0 | 0 | 0 |
 | Overdelivery Features | 17 | 13 | 0 | 0 | 4 |
-| **Total** | **127** | **123** | **0** | **0** | **4** |
+| **Total** | **133** | **129** | **0** | **0** | **4** |
 
 > **Note on deferred items**: O-004 (Rich Text Editor), O-006 (Multi-Image Gallery), and O-008 (Push Notifications) were deferred as low-ROI for the assignment scope — they would add complexity without demonstrating additional architectural skill. O-011 (CI/CD Pipeline) is not relevant for this assignment submission but would be essential in a production environment. A GitHub Actions workflow running `flutter analyze`, `flutter test`, and `flutter build apk` on every push to `main` would be the standard setup.
 > 
-> **Test counts**: 185 total tests — auth (32), create_article (76), daily_news (24), ai_insight (53). All passing.
+> **Test counts**: 189 total tests — auth (32), create_article (80), daily_news (24), ai_insight (53). All passing.

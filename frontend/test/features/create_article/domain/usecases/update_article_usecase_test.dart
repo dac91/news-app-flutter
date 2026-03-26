@@ -32,6 +32,7 @@ void main() {
     content: 'Updated Content',
     author: 'Author',
     thumbnailUrl: 'https://example.com/img.jpg',
+    ownerUid: 'uid-123',
     category: 'technology',
     createdAt: DateTime(2026, 3, 20),
   );
@@ -82,6 +83,7 @@ void main() {
 
       expect(captured.id, 'doc-123');
       expect(captured.title, 'Updated Title');
+      expect(captured.ownerUid, 'uid-123');
       expect(captured.category, 'technology');
     });
   });

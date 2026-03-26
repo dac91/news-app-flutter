@@ -20,8 +20,8 @@ abstract class CreateArticleRepository {
     FirebaseArticleEntity article,
   );
 
-  /// Fetches all articles authored by the given [authorName].
-  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByAuthor(
-    String authorName,
+  /// Fetches all articles owned by the given [ownerUid].
+  Future<DataState<List<FirebaseArticleEntity>>> getArticlesByOwner(
+    String ownerUid,
   );
 }
