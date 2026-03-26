@@ -44,6 +44,7 @@ void main() {
     summaryBullets: ['Fact 1', 'Fact 2', 'Fact 3'],
     tone: 'neutral',
     toneExplanation: 'Balanced reporting style.',
+    politicalLeaning: 'center',
     sourceContext: 'BBC is the UK public broadcaster.',
     emphasisAnalysis: 'Emphasizes policy impact; limited business perspective.',
   );

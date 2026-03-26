@@ -30,6 +30,7 @@ class CategoryChipBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return SizedBox(
       height: 48,
@@ -55,7 +56,9 @@ class CategoryChipBar extends StatelessWidget {
               }
             },
             selectedColor: theme.colorScheme.primary,
-            backgroundColor: AppColors.surfaceContainerHighest,
+            backgroundColor: isDark
+                ? AppColors.surfaceContainerHighest
+                : AppColors.lightSurfaceContainerHighest,
             labelStyle: TextStyle(
               color: isSelected
                   ? theme.colorScheme.onPrimary

@@ -8,6 +8,7 @@ void main() {
         summaryBullets: ['Bullet 1', 'Bullet 2'],
         tone: 'neutral',
         toneExplanation: 'The article presents facts without bias.',
+        politicalLeaning: 'center',
         sourceContext: 'Reuters is a global wire service.',
         emphasisAnalysis: 'Focuses on economic data; omits social impact.',
       );
@@ -15,6 +16,7 @@ void main() {
         summaryBullets: ['Bullet 1', 'Bullet 2'],
         tone: 'neutral',
         toneExplanation: 'The article presents facts without bias.',
+        politicalLeaning: 'center',
         sourceContext: 'Reuters is a global wire service.',
         emphasisAnalysis: 'Focuses on economic data; omits social impact.',
       );
@@ -27,6 +29,7 @@ void main() {
         summaryBullets: ['Bullet 1'],
         tone: 'neutral',
         toneExplanation: 'Explanation',
+        politicalLeaning: 'center',
         sourceContext: 'Context',
         emphasisAnalysis: 'Analysis',
       );
@@ -34,6 +37,7 @@ void main() {
         summaryBullets: ['Bullet 1'],
         tone: 'critical',
         toneExplanation: 'Explanation',
+        politicalLeaning: 'center',
         sourceContext: 'Context',
         emphasisAnalysis: 'Analysis',
       );
@@ -46,6 +50,7 @@ void main() {
         summaryBullets: ['A', 'B'],
         tone: 'neutral',
         toneExplanation: 'Explanation',
+        politicalLeaning: 'center',
         sourceContext: 'Context',
         emphasisAnalysis: 'Analysis',
       );
@@ -53,6 +58,28 @@ void main() {
         summaryBullets: ['A', 'C'],
         tone: 'neutral',
         toneExplanation: 'Explanation',
+        politicalLeaning: 'center',
+        sourceContext: 'Context',
+        emphasisAnalysis: 'Analysis',
+      );
+
+      expect(entity1, isNot(equals(entity2)));
+    });
+
+    test('entities with different politicalLeaning are not equal', () {
+      const entity1 = AiInsightEntity(
+        summaryBullets: ['A'],
+        tone: 'neutral',
+        toneExplanation: 'Explanation',
+        politicalLeaning: 'center-left',
+        sourceContext: 'Context',
+        emphasisAnalysis: 'Analysis',
+      );
+      const entity2 = AiInsightEntity(
+        summaryBullets: ['A'],
+        tone: 'neutral',
+        toneExplanation: 'Explanation',
+        politicalLeaning: 'center-right',
         sourceContext: 'Context',
         emphasisAnalysis: 'Analysis',
       );
@@ -65,6 +92,7 @@ void main() {
         summaryBullets: ['Point 1'],
         tone: 'supportive',
         toneExplanation: 'Tone explanation text',
+        politicalLeaning: 'center-left',
         sourceContext: 'Source context text',
         emphasisAnalysis: 'Emphasis analysis text',
       );
@@ -73,6 +101,7 @@ void main() {
         ['Point 1'],
         'supportive',
         'Tone explanation text',
+        'center-left',
         'Source context text',
         'Emphasis analysis text',
       ]);

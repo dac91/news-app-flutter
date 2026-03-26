@@ -5,6 +5,7 @@ import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/domain/entities/ai_insight_entity.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Modal bottom sheet that displays AI-generated article insights.
 ///
@@ -16,7 +17,10 @@ import 'package:news_app_clean_architecture/features/ai_insight/presentation/cub
 /// - Readers want "where the information is from and the political view"
 /// - Framed as perspective context, NOT fact-checking (Assumption 14)
 class AiInsightPanel extends StatelessWidget {
-  const AiInsightPanel({Key? key}) : super(key: key);
+  /// The original article URL, used for the "Read original" link.
+  final String? articleUrl;
+
+  const AiInsightPanel({Key? key, this.articleUrl}) : super(key: key);
 
   /// Shows the AI insight bottom sheet and triggers generation if needed.
   ///
@@ -48,7 +52,7 @@ class AiInsightPanel extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider.value(
         value: cubit,
-        child: const AiInsightPanel(),
+        child: AiInsightPanel(articleUrl: url),
       ),
     );
   }
@@ -89,7 +93,7 @@ class AiInsightPanel extends StatelessWidget {
                     if (state is AiInsightLoading || state is AiInsightInitial)
                       _buildLoading(theme),
                     if (state is AiInsightLoaded)
-                      _buildContent(theme, state.insight),
+                      _buildContent(theme, state.insight, isDark),
                     if (state is AiInsightError)
                       _buildError(theme),
                   ],
@@ -219,7 +223,7 @@ class AiInsightPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(ThemeData theme, AiInsightEntity insight) {
+  Widget _buildContent(ThemeData theme, AiInsightEntity insight, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
@@ -288,8 +292,15 @@ class AiInsightPanel extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Tone badge
-          _buildToneBadge(theme, insight.tone),
+          // Tone + Political Leaning badges (side by side)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildToneBadge(theme, insight.tone, isDark),
+              _buildPoliticalLeaningBadge(theme, insight.politicalLeaning),
+            ],
+          ),
 
           // Source context
           if (insight.sourceContext.isNotEmpty) ...[
@@ -313,13 +324,94 @@ class AiInsightPanel extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Disclaimer
+          // "Read original" link + Disclaimer row
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'AI-generated summary \u2014 verify independently',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+              ),
+              if (articleUrl != null && articleUrl!.isNotEmpty)
+                GestureDetector(
+                  onTap: () => _launchUrl(articleUrl!),
+                  child: Text(
+                    'Read original',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                      decorationColor: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToneBadge(ThemeData theme, String tone, bool isDark) {
+    final color = _toneColor(tone);
+    // Use higher opacity on light theme for better contrast
+    final bgOpacity = isDark ? 0.1 : 0.15;
+    final borderOpacity = isDark ? 0.3 : 0.5;
+    // On light theme, darken the text color for better readability
+    final textColor = isDark ? color : _darkenColor(color, 0.3);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(bgOpacity),
+        borderRadius: AppRadius.smBorder,
+        border: Border.all(color: color.withOpacity(borderOpacity)),
+      ),
+      child: Text(
+        tone.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  /// Displays the political leaning as a badge with a spectrum icon.
+  ///
+  /// Research backing: "Say where the information is from and the political
+  /// view of the author" — Female, 21, UK (Reuters DNR 2025).
+  Widget _buildPoliticalLeaningBadge(ThemeData theme, String leaning) {
+    final label = _formatLeaning(leaning);
+    final color = _leaningColor(leaning);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: AppRadius.smBorder,
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.balance, size: 12, color: color),
+          const SizedBox(width: 4),
           Text(
-            'AI-generated summary \u2014 verify independently',
-            style: theme.textTheme.bodySmall?.copyWith(
+            label,
+            style: TextStyle(
               fontSize: 11,
-              fontStyle: FontStyle.italic,
-              color: theme.colorScheme.outline,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -327,25 +419,13 @@ class AiInsightPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildToneBadge(ThemeData theme, String tone) {
-    final color = _toneColor(tone);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: AppRadius.smBorder,
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Text(
-        tone.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-          letterSpacing: 0.5,
-        ),
-      ),
+  /// Darkens a color by mixing it with black.
+  Color _darkenColor(Color color, double amount) {
+    final hsl = HSLColor.fromColor(color);
+    final darkened = hsl.withLightness(
+      (hsl.lightness - amount).clamp(0.0, 1.0),
     );
+    return darkened.toColor();
   }
 
   Color _toneColor(String tone) {
@@ -364,6 +444,53 @@ class AiInsightPanel extends StatelessWidget {
         return AppColors.toneAnalytical;
       default:
         return AppColors.toneNeutral;
+    }
+  }
+
+  /// Maps political leaning to a display-friendly label.
+  String _formatLeaning(String leaning) {
+    switch (leaning.toLowerCase()) {
+      case 'left':
+        return 'LEFT';
+      case 'center-left':
+        return 'CENTER-LEFT';
+      case 'center':
+        return 'CENTER';
+      case 'center-right':
+        return 'CENTER-RIGHT';
+      case 'right':
+        return 'RIGHT';
+      default:
+        return 'UNKNOWN';
+    }
+  }
+
+  /// Maps political leaning to a color on a spectrum.
+  ///
+  /// Uses the existing design token palette — avoids introducing
+  /// literal "red = right / blue = left" US-centric colors, instead
+  /// using the app's semantic teal/warm palette.
+  Color _leaningColor(String leaning) {
+    switch (leaning.toLowerCase()) {
+      case 'left':
+        return AppColors.toneOptimistic; // teal-blue
+      case 'center-left':
+        return AppColors.toneAnalytical; // muted teal
+      case 'center':
+        return AppColors.toneNeutral; // grey
+      case 'center-right':
+        return AppColors.tertiary; // warm peach
+      case 'right':
+        return AppColors.toneCritical; // warm orange
+      default:
+        return AppColors.toneNeutral; // grey for unknown
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 }

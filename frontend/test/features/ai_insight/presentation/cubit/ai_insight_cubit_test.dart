@@ -38,6 +38,7 @@ void main() {
     ],
     tone: 'alarming',
     toneExplanation: 'The article uses urgent language to convey crisis.',
+    politicalLeaning: 'center-left',
     sourceContext: 'The Guardian is known for progressive editorial stance.',
     emphasisAnalysis:
         'Emphasizes climate urgency; limited coverage of economic tradeoffs.',
@@ -182,6 +183,7 @@ void main() {
             summaryBullets: ['Different'],
             tone: 'critical',
             toneExplanation: 'Different explanation',
+            politicalLeaning: 'right',
             sourceContext: 'Different context',
             emphasisAnalysis: 'Different analysis',
           ),

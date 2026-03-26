@@ -40,6 +40,7 @@ void main() {
     ],
     tone: 'neutral',
     toneExplanation: 'The article presents factual data without advocacy.',
+    politicalLeaning: 'center',
     sourceContext: 'Reuters is a major international wire service.',
     emphasisAnalysis:
         'Focuses on regulatory approvals; limited on patient impact.',

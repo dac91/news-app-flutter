@@ -28,6 +28,7 @@ Analyze the article and return a JSON object with these exact keys:
   "summaryBullets": ["bullet 1", "bullet 2", "bullet 3"],
   "tone": "neutral" | "critical" | "supportive" | "alarming" | "optimistic" | "analytical",
   "toneExplanation": "One sentence explaining the tone in context of the topic",
+  "politicalLeaning": "left" | "center-left" | "center" | "center-right" | "right" | "unknown",
   "sourceContext": "Brief background on the publication and its typical editorial perspective. If unknown, say 'Source context not available for this publication.'",
   "emphasisAnalysis": "What angles does this article emphasize? What perspectives or context might be missing?"
 }
@@ -36,6 +37,7 @@ Rules:
 - summaryBullets: 3-5 bullet points covering key facts only (no opinions)
 - tone: Pick ONE word from the list above
 - toneExplanation: Reference specific word choices or framing that indicate the tone
+- politicalLeaning: Assess the article's perspective based on its framing, source selection, and language. Use "center" for balanced reporting, "unknown" if insufficient signal. This is per-article, not per-outlet.
 - sourceContext: Be factual about the publication. Do not speculate.
 - emphasisAnalysis: Be balanced. Note what IS covered and what MIGHT be missing.
 - Return ONLY valid JSON. No markdown, no code fences, no explanation.

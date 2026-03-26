@@ -9,6 +9,7 @@ class AiInsightModel extends Equatable {
   final List<String> summaryBullets;
   final String tone;
   final String toneExplanation;
+  final String politicalLeaning;
   final String sourceContext;
   final String emphasisAnalysis;
 
@@ -16,6 +17,7 @@ class AiInsightModel extends Equatable {
     required this.summaryBullets,
     required this.tone,
     required this.toneExplanation,
+    required this.politicalLeaning,
     required this.sourceContext,
     required this.emphasisAnalysis,
   });
@@ -29,6 +31,7 @@ class AiInsightModel extends Equatable {
           [],
       tone: json['tone'] as String? ?? 'unknown',
       toneExplanation: json['toneExplanation'] as String? ?? '',
+      politicalLeaning: json['politicalLeaning'] as String? ?? 'unknown',
       sourceContext: json['sourceContext'] as String? ?? '',
       emphasisAnalysis: json['emphasisAnalysis'] as String? ?? '',
     );
@@ -40,6 +43,7 @@ class AiInsightModel extends Equatable {
       summaryBullets: entity.summaryBullets,
       tone: entity.tone,
       toneExplanation: entity.toneExplanation,
+      politicalLeaning: entity.politicalLeaning,
       sourceContext: entity.sourceContext,
       emphasisAnalysis: entity.emphasisAnalysis,
     );
@@ -51,6 +55,7 @@ class AiInsightModel extends Equatable {
       'summaryBullets': summaryBullets,
       'tone': tone,
       'toneExplanation': toneExplanation,
+      'politicalLeaning': politicalLeaning,
       'sourceContext': sourceContext,
       'emphasisAnalysis': emphasisAnalysis,
     };
@@ -62,6 +67,7 @@ class AiInsightModel extends Equatable {
       summaryBullets: summaryBullets,
       tone: tone,
       toneExplanation: toneExplanation,
+      politicalLeaning: politicalLeaning,
       sourceContext: sourceContext,
       emphasisAnalysis: emphasisAnalysis,
     );
@@ -72,6 +78,7 @@ class AiInsightModel extends Equatable {
         summaryBullets,
         tone,
         toneExplanation,
+        politicalLeaning,
         sourceContext,
         emphasisAnalysis,
       ];

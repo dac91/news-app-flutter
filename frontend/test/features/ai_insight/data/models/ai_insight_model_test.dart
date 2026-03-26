@@ -8,6 +8,7 @@ void main() {
       summaryBullets: ['Key fact 1', 'Key fact 2', 'Key fact 3'],
       tone: 'neutral',
       toneExplanation: 'The article presents balanced viewpoints.',
+      politicalLeaning: 'center',
       sourceContext: 'Reuters is a major international wire service.',
       emphasisAnalysis: 'Focuses on economic indicators; omits social impact.',
     );
@@ -16,6 +17,7 @@ void main() {
       'summaryBullets': ['Key fact 1', 'Key fact 2', 'Key fact 3'],
       'tone': 'neutral',
       'toneExplanation': 'The article presents balanced viewpoints.',
+      'politicalLeaning': 'center',
       'sourceContext': 'Reuters is a major international wire service.',
       'emphasisAnalysis':
           'Focuses on economic indicators; omits social impact.',
@@ -28,6 +30,7 @@ void main() {
         expect(model.summaryBullets, tModel.summaryBullets);
         expect(model.tone, tModel.tone);
         expect(model.toneExplanation, tModel.toneExplanation);
+        expect(model.politicalLeaning, tModel.politicalLeaning);
         expect(model.sourceContext, tModel.sourceContext);
         expect(model.emphasisAnalysis, tModel.emphasisAnalysis);
       });
@@ -36,6 +39,7 @@ void main() {
         final model = AiInsightModel.fromJson(const {
           'tone': 'critical',
           'toneExplanation': 'Explanation',
+          'politicalLeaning': 'left',
           'sourceContext': 'Context',
           'emphasisAnalysis': 'Analysis',
         });
@@ -49,6 +53,7 @@ void main() {
         expect(model.summaryBullets, isEmpty);
         expect(model.tone, 'unknown');
         expect(model.toneExplanation, '');
+        expect(model.politicalLeaning, 'unknown');
         expect(model.sourceContext, '');
         expect(model.emphasisAnalysis, '');
       });
@@ -60,6 +65,18 @@ void main() {
         });
 
         expect(model.summaryBullets, ['1', '2.5', 'true', 'text']);
+      });
+
+      test('handles missing politicalLeaning with unknown default', () {
+        final model = AiInsightModel.fromJson(const {
+          'summaryBullets': ['Fact'],
+          'tone': 'neutral',
+          'toneExplanation': 'Balanced.',
+          'sourceContext': 'Wire service.',
+          'emphasisAnalysis': 'Broad coverage.',
+        });
+
+        expect(model.politicalLeaning, 'unknown');
       });
     });
 
@@ -83,6 +100,7 @@ void main() {
           summaryBullets: ['Bullet A', 'Bullet B'],
           tone: 'supportive',
           toneExplanation: 'The tone is supportive.',
+          politicalLeaning: 'center-left',
           sourceContext: 'The publication leans liberal.',
           emphasisAnalysis: 'Emphasizes benefits; downplays risks.',
         );
@@ -92,6 +110,7 @@ void main() {
         expect(model.summaryBullets, entity.summaryBullets);
         expect(model.tone, entity.tone);
         expect(model.toneExplanation, entity.toneExplanation);
+        expect(model.politicalLeaning, entity.politicalLeaning);
         expect(model.sourceContext, entity.sourceContext);
         expect(model.emphasisAnalysis, entity.emphasisAnalysis);
       });
@@ -105,6 +124,7 @@ void main() {
         expect(entity.summaryBullets, tModel.summaryBullets);
         expect(entity.tone, tModel.tone);
         expect(entity.toneExplanation, tModel.toneExplanation);
+        expect(entity.politicalLeaning, tModel.politicalLeaning);
         expect(entity.sourceContext, tModel.sourceContext);
         expect(entity.emphasisAnalysis, tModel.emphasisAnalysis);
       });
@@ -114,6 +134,7 @@ void main() {
           summaryBullets: ['X', 'Y'],
           tone: 'analytical',
           toneExplanation: 'Deep dive tone',
+          politicalLeaning: 'center-right',
           sourceContext: 'Academic publication',
           emphasisAnalysis: 'Data-heavy approach',
         );
@@ -131,6 +152,7 @@ void main() {
           summaryBullets: ['A'],
           tone: 'neutral',
           toneExplanation: 'Exp',
+          politicalLeaning: 'center',
           sourceContext: 'Ctx',
           emphasisAnalysis: 'Ana',
         );
@@ -138,6 +160,7 @@ void main() {
           summaryBullets: ['A'],
           tone: 'neutral',
           toneExplanation: 'Exp',
+          politicalLeaning: 'center',
           sourceContext: 'Ctx',
           emphasisAnalysis: 'Ana',
         );
@@ -150,6 +173,7 @@ void main() {
           summaryBullets: ['A'],
           tone: 'neutral',
           toneExplanation: 'Exp',
+          politicalLeaning: 'center',
           sourceContext: 'Ctx',
           emphasisAnalysis: 'Ana',
         );
@@ -157,6 +181,28 @@ void main() {
           summaryBullets: ['B'],
           tone: 'neutral',
           toneExplanation: 'Exp',
+          politicalLeaning: 'center',
+          sourceContext: 'Ctx',
+          emphasisAnalysis: 'Ana',
+        );
+
+        expect(model1, isNot(equals(model2)));
+      });
+
+      test('models with different politicalLeaning are not equal', () {
+        const model1 = AiInsightModel(
+          summaryBullets: ['A'],
+          tone: 'neutral',
+          toneExplanation: 'Exp',
+          politicalLeaning: 'left',
+          sourceContext: 'Ctx',
+          emphasisAnalysis: 'Ana',
+        );
+        const model2 = AiInsightModel(
+          summaryBullets: ['A'],
+          tone: 'neutral',
+          toneExplanation: 'Exp',
+          politicalLeaning: 'right',
           sourceContext: 'Ctx',
           emphasisAnalysis: 'Ana',
         );
