@@ -1,272 +1,189 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/domain/entities/ai_insight_entity.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_state.dart';
 
-/// A collapsible panel that displays AI-generated article insights.
+/// Modal bottom sheet that displays AI-generated article insights.
 ///
-/// Shows a summary, tone analysis, source context, and emphasis analysis.
-/// Includes an "AI-generated" disclaimer and "Read original" link.
+/// One-click action: tapping "Generate AI Insight" on article detail
+/// immediately triggers generation AND opens this bottom sheet.
 ///
 /// Research backing:
 /// - 58% worry about fake news (Reuters DNR 2025)
 /// - Readers want "where the information is from and the political view"
 /// - Framed as perspective context, NOT fact-checking (Assumption 14)
-class AiInsightPanel extends StatefulWidget {
-  final String? articleUrl;
-  final VoidCallback? onRequestInsight;
+class AiInsightPanel extends StatelessWidget {
+  const AiInsightPanel({Key? key}) : super(key: key);
 
-  const AiInsightPanel({Key? key, this.articleUrl, this.onRequestInsight})
-      : super(key: key);
+  /// Shows the AI insight bottom sheet and triggers generation if needed.
+  ///
+  /// If the cubit is already in [AiInsightLoaded] state, shows existing data
+  /// without re-fetching. Otherwise triggers generation and shows the sheet.
+  static void show({
+    required BuildContext context,
+    required AiInsightCubit cubit,
+    String title = '',
+    String? description,
+    String? content,
+    String? source,
+    String? url,
+  }) {
+    // Only fetch if not already loaded
+    if (cubit.state is! AiInsightLoaded) {
+      cubit.getInsight(
+        title: title,
+        description: description,
+        content: content,
+        source: source,
+        url: url,
+      );
+    }
 
-  @override
-  State<AiInsightPanel> createState() => _AiInsightPanelState();
-}
-
-class _AiInsightPanelState extends State<AiInsightPanel> {
-  bool _isExpanded = false;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: cubit,
+        child: const AiInsightPanel(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return BlocBuilder<AiInsightCubit, AiInsightState>(
       builder: (context, state) {
-        if (state is AiInsightInitial) {
-          return _buildTriggerButton(context);
-        }
-
-        if (state is AiInsightLoading) {
-          return _buildLoadingCard(context);
-        }
-
-        if (state is AiInsightError) {
-          return _buildErrorCard(context, state);
-        }
-
-        if (state is AiInsightLoaded) {
-          return _buildInsightCard(context, state.insight);
-        }
-
-        return const SizedBox.shrink();
+        return DraggableScrollableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceContainerHigh
+                    : AppColors.lightSurfaceContainerHigh,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppRadius.lg),
+                ),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDragHandle(theme),
+                    _buildHeader(context, theme),
+                    Divider(
+                      height: 1,
+                      color: theme.colorScheme.outlineVariant,
+                    ),
+                    if (state is AiInsightLoading || state is AiInsightInitial)
+                      _buildLoading(theme),
+                    if (state is AiInsightLoaded)
+                      _buildContent(theme, state.insight),
+                    if (state is AiInsightError)
+                      _buildError(theme),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
 
-  Widget _buildTriggerButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: OutlinedButton.icon(
-        onPressed: () {
-          _requestInsight(context);
-        },
-        icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-        label: const Text('Get AI Insight'),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  Widget _buildDragHandle(ThemeData theme) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.only(top: 12),
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.outlineVariant,
+          borderRadius: AppRadius.fullBorder,
         ),
       ),
     );
   }
 
-  void _requestInsight(BuildContext context) {
-    widget.onRequestInsight?.call();
-  }
-
-  Widget _buildLoadingCard(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget _buildHeader(BuildContext context, ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdBorder,
-          side: BorderSide(
-            color: theme.colorScheme.outlineVariant,
+      padding: const EdgeInsets.fromLTRB(20, 16, 8, 12),
+      child: Row(
+        children: [
+          Icon(
+            Icons.auto_awesome,
+            size: 22,
+            color: theme.colorScheme.primary,
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Analyzing article...',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI Insight',
+                  style: GoogleFonts.newsreader(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorCard(BuildContext context, AiInsightError state) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Card(
-        elevation: 0,
-        color: theme.colorScheme.errorContainer.withOpacity(0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdBorder,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(Icons.error_outline,
-                  color: theme.colorScheme.error, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Could not generate insight. Try again later.',
-                  style: theme.textTheme.bodySmall,
+                const SizedBox(height: 2),
+                Text(
+                  'GENERATED BY SYMMETRY INTELLIGENCE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.5,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.close,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildInsightCard(BuildContext context, AiInsightEntity insight) {
-    final theme = Theme.of(context);
+  Widget _buildLoading(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdBorder,
-          side: BorderSide(
-            color: theme.colorScheme.primary.withOpacity(0.2),
-          ),
-        ),
+      padding: const EdgeInsets.all(48),
+      child: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header (always visible)
-            InkWell(
-              onTap: () => setState(() => _isExpanded = !_isExpanded),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      size: 18,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'AI Insight',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    _buildToneBadge(context, insight.tone),
-                    const SizedBox(width: 8),
-                    Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                ),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: theme.colorScheme.primary,
               ),
             ),
-
-            // Summary bullets (always visible when loaded)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Key Points',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  ...insight.summaryBullets.map(
-                    (bullet) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('  \u2022  ',
-                              style: theme.textTheme.bodySmall),
-                          Expanded(
-                            child: Text(
-                              bullet,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                  height: 1.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Expanded details
-            if (_isExpanded) ...[
-              const Divider(height: 24, indent: 16, endIndent: 16),
-
-              // Tone Analysis
-              _buildSection(
-                context,
-                icon: Icons.mood,
-                title: 'Tone',
-                content: insight.toneExplanation,
-              ),
-
-              // Source Context
-              _buildSection(
-                context,
-                icon: Icons.source_outlined,
-                title: 'Source Context',
-                content: insight.sourceContext,
-              ),
-
-              // Emphasis Analysis
-              _buildSection(
-                context,
-                icon: Icons.balance,
-                title: 'What\'s Emphasized',
-                content: insight.emphasisAnalysis,
-              ),
-            ],
-
-            // Disclaimer (always visible)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Text(
-                'AI-generated summary \u2014 verify independently',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
-                  color: theme.colorScheme.outline,
-                ),
+            const SizedBox(height: 16),
+            Text(
+              'Analyzing article...',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -275,10 +192,145 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
     );
   }
 
-  Widget _buildToneBadge(BuildContext context, String tone) {
+  Widget _buildError(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, size: 40, color: theme.colorScheme.error),
+            const SizedBox(height: 12),
+            Text(
+              'Could not generate insight',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Please try again later.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(ThemeData theme, AiInsightEntity insight) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Executive Summary chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.15),
+              borderRadius: AppRadius.smBorder,
+            ),
+            child: Text(
+              'EXECUTIVE SUMMARY',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Summary quote (italic Newsreader)
+          Text(
+            '\u201C${insight.emphasisAnalysis}\u201D',
+            style: GoogleFonts.newsreader(
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+              height: 1.5,
+              color: theme.colorScheme.onSurface.withOpacity(0.9),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Bullet points with colored dots
+          ...insight.summaryBullets.map(
+            (bullet) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      bullet,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.5,
+                        color: theme.colorScheme.onSurface.withOpacity(0.85),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Tone badge
+          _buildToneBadge(theme, insight.tone),
+
+          // Source context
+          if (insight.sourceContext.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Source Context',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              insight.sourceContext,
+              style: theme.textTheme.bodySmall?.copyWith(
+                height: 1.5,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 16),
+
+          // Disclaimer
+          Text(
+            'AI-generated summary \u2014 verify independently',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: theme.colorScheme.outline,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToneBadge(ThemeData theme, String tone) {
     final color = _toneColor(tone);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: AppRadius.smBorder,
@@ -287,7 +339,7 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
       child: Text(
         tone.toUpperCase(),
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
           letterSpacing: 0.5,
@@ -313,43 +365,5 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
       default:
         return AppColors.toneNeutral;
     }
-  }
-
-  Widget _buildSection(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String content,
-  }) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16,
-                  color: theme.colorScheme.onSurfaceVariant),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.only(left: 22),
-            child: Text(
-              content,
-              style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

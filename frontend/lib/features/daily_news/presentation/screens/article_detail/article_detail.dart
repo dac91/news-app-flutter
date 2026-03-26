@@ -7,6 +7,7 @@ import '../../../../../config/theme/design_tokens.dart';
 import '../../../../../core/constants/constants.dart';
 import '../../../../../injection_container.dart';
 import '../../../../../features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
+import '../../../../../features/ai_insight/presentation/cubit/ai_insight_state.dart';
 import '../../../../../features/ai_insight/presentation/widgets/ai_insight_panel.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
@@ -39,9 +40,7 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
       child: BlocListener<LocalArticleBloc, LocalArticlesState>(
         listener: _onLocalArticlesState,
         child: Scaffold(
-          appBar: _buildAppBar(),
           body: _buildBody(),
-          floatingActionButton: _buildFloatingActionButton(),
         ),
       ),
     );
@@ -58,73 +57,218 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
     }
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      leading: Builder(
-        builder: (context) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _onBackButtonTapped(context),
-          child: Icon(Ionicons.chevron_back,
-              color: Theme.of(context).appBarTheme.iconTheme?.color),
-        ),
-      ),
-      actions: [
-        Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.share_outlined),
-            tooltip: 'Share article',
-            onPressed: () => _onSharePressed(context),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBody() {
     return SingleChildScrollView(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildArticleTitleAndDate(),
-          _buildArticleImage(),
-          _buildArticleDescription(),
-          _buildAiInsightSection(),
+          _buildHeroImage(),
+          _buildMetaRow(),
+          _buildTitle(),
+          _buildAuthorRow(),
+          _buildAiInsightButton(),
+          _buildArticleContent(),
         ],
       ),
     );
   }
 
-  Widget _buildArticleTitleAndDate() {
+  Widget _buildHeroImage() {
+    final heroTag =
+        'article-image-${widget.article?.id ?? widget.article?.title?.hashCode ?? 0}';
+    return Builder(
+      builder: (context) {
+        final mediaQuery = MediaQuery.of(context);
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Stack(
+          children: [
+            // Hero image
+            Hero(
+              tag: heroTag,
+              child: Container(
+                width: double.infinity,
+                height: 300,
+                color: isDark
+                    ? AppColors.surfaceContainerHigh
+                    : AppColors.lightSurfaceContainerHigh,
+                child: Image.network(
+                  widget.article?.urlToImage ?? kDefaultImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                      size: 48,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Gradient overlay at bottom
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      theme.scaffoldBackgroundColor,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Back button
+            Positioned(
+              top: mediaQuery.padding.top + 8,
+              left: 12,
+              child: _buildOverlayButton(
+                context: context,
+                icon: Ionicons.chevron_back,
+                onTap: () => Navigator.pop(context),
+              ),
+            ),
+            // Share + Bookmark
+            Positioned(
+              top: mediaQuery.padding.top + 8,
+              right: 12,
+              child: Row(
+                children: [
+                  _buildOverlayButton(
+                    context: context,
+                    icon: Icons.share_outlined,
+                    onTap: () => _onSharePressed(context),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildOverlayButton(
+                    context: context,
+                    icon: _isBookmarked
+                        ? Ionicons.bookmark
+                        : Ionicons.bookmark_outline,
+                    onTap: () => _onBookmarkPressed(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildOverlayButton({
+    required BuildContext context,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: AppColors.surface.withOpacity(0.5),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetaRow() {
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final readTime = _estimateReadTime();
+        final source = widget.article?.author ?? 'Unknown Source';
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(22, 8, 22, 0),
+          child: Text(
+            '${source.toUpperCase()} \u2022 $readTime MIN READ',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTitle() {
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.fromLTRB(22, 12, 22, 0),
+          child: Text(
+            widget.article?.title ?? '',
+            style: GoogleFonts.newsreader(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAuthorRow() {
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        final author = widget.article?.author ?? 'Unknown';
+        final date = widget.article?.publishedAt ?? '';
+        final initial = author.isNotEmpty ? author[0].toUpperCase() : '?';
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(22, 16, 22, 0),
+          child: Row(
             children: [
-              // Title
-              Text(
-                widget.article?.title ?? '',
-                style: GoogleFonts.newsreader(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface,
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Text(
+                  initial,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 14),
-              // DateTime
-              Row(
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Ionicons.time_outline, size: 16,
-                      color: theme.colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 4),
                   Text(
-                    widget.article?.publishedAt ?? '',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    author,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
+                  if (date.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDate(date),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -134,89 +278,105 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
     );
   }
 
-  Widget _buildArticleImage() {
-    final heroTag =
-        'article-image-${widget.article?.id ?? widget.article?.title?.hashCode ?? 0}';
+  Widget _buildAiInsightButton() {
     return Builder(
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Hero(
-          tag: heroTag,
-          child: Container(
-            width: double.maxFinite,
-            height: 250,
-            margin: const EdgeInsets.only(top: 14),
-            child: Image.network(
-              widget.article?.urlToImage ?? kDefaultImage,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: AppColors.surfaceContainerHigh,
-                child: Icon(
-                  Icons.broken_image_outlined,
-                  size: 48,
-                  color: theme.colorScheme.onSurfaceVariant,
+      builder: (innerContext) {
+        return BlocBuilder<AiInsightCubit, AiInsightState>(
+          builder: (context, state) {
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+            final isLoading = state is AiInsightLoading;
+            final isLoaded = state is AiInsightLoaded;
+
+            final label =
+                isLoaded ? 'View AI Insight' : 'Generate AI Insight';
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
+              child: GestureDetector(
+                onTap: isLoading
+                    ? null
+                    : () => _onAiInsightTapped(innerContext),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.surfaceContainerHigh
+                        : AppColors.lightSurfaceContainerHigh,
+                    borderRadius: AppRadius.mdBorder,
+                  ),
+                  child: Row(
+                    children: [
+                      if (isLoading)
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      else
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 20,
+                          color: theme.colorScheme.primary,
+                        ),
+                      const SizedBox(width: 10),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildArticleDescription() {
+  Widget _buildArticleContent() {
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 32),
           child: Text(
             '${widget.article?.description ?? ''}\n\n${widget.article?.content ?? ''}',
-            style: theme.textTheme.bodyLarge,
+            style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
           ),
         );
       },
     );
   }
 
-  Widget _buildAiInsightSection() {
-    // Use Builder to obtain a context that is below MultiBlocProvider,
-    // so that context.read<AiInsightCubit>() can find the cubit.
-    return Builder(
-      builder: (innerContext) => AiInsightPanel(
-        articleUrl: widget.article?.url,
-        onRequestInsight: () {
-          innerContext.read<AiInsightCubit>().getInsight(
-                title: widget.article?.title ?? '',
-                description: widget.article?.description,
-                content: widget.article?.content,
-                source: widget.article?.author,
-                url: widget.article?.url,
-              );
-        },
-      ),
+  void _onAiInsightTapped(BuildContext context) {
+    AiInsightPanel.show(
+      context: context,
+      cubit: context.read<AiInsightCubit>(),
+      title: widget.article?.title ?? '',
+      description: widget.article?.description,
+      content: widget.article?.content,
+      source: widget.article?.author,
+      url: widget.article?.url,
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    return Builder(
-      builder: (context) => FloatingActionButton(
-        onPressed: () => _onFloatingActionButtonPressed(context),
-        child: Icon(
-          _isBookmarked ? Ionicons.bookmark : Ionicons.bookmark_outline,
-          color: Theme.of(context)
-              .floatingActionButtonTheme
-              .foregroundColor,
-        ),
-      ),
-    );
-  }
-
-  void _onBackButtonTapped(BuildContext context) {
-    Navigator.pop(context);
-  }
-
-  void _onFloatingActionButtonPressed(BuildContext context) {
+  void _onBookmarkPressed(BuildContext context) {
     final currentArticle = widget.article;
     if (currentArticle == null) return;
 
@@ -225,16 +385,12 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
     if (_isBookmarked) {
       bloc.add(RemoveArticle(currentArticle));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bookmark removed'),
-        ),
+        const SnackBar(content: Text('Bookmark removed')),
       );
     } else {
       bloc.add(SaveArticle(currentArticle));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Article bookmarked'),
-        ),
+        const SnackBar(content: Text('Article bookmarked')),
       );
     }
   }
@@ -244,5 +400,27 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
     final url = widget.article?.url ?? '';
     final shareText = url.isNotEmpty ? '$title\n\n$url' : title;
     Share.share(shareText, subject: title);
+  }
+
+  int _estimateReadTime() {
+    final text =
+        '${widget.article?.description ?? ''} ${widget.article?.content ?? ''}';
+    final wordCount =
+        text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final minutes = (wordCount / 200).ceil();
+    return minutes < 1 ? 1 : minutes;
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+      ];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    } catch (_) {
+      return dateStr;
+    }
   }
 }
