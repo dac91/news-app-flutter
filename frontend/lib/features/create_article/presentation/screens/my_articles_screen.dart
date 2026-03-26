@@ -10,16 +10,24 @@ import '../../../../config/theme/design_tokens.dart';
 ///
 /// Each article shows title, category, date, and an edit button that
 /// navigates to [CreateArticlePage] in edit mode.
-class MyArticlesScreen extends StatelessWidget {
+class MyArticlesScreen extends StatefulWidget {
   final String ownerUid;
 
   const MyArticlesScreen({Key? key, required this.ownerUid}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Trigger fetch on build
-    context.read<MyArticlesCubit>().fetchArticles(ownerUid);
+  State<MyArticlesScreen> createState() => _MyArticlesScreenState();
+}
 
+class _MyArticlesScreenState extends State<MyArticlesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<MyArticlesCubit>().fetchArticles(widget.ownerUid);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Articles'),
@@ -53,7 +61,7 @@ class MyArticlesScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        context.read<MyArticlesCubit>().fetchArticles(ownerUid);
+                        context.read<MyArticlesCubit>().fetchArticles(widget.ownerUid);
                       },
                       child: const Text('Retry'),
                     ),
@@ -75,7 +83,7 @@ class MyArticlesScreen extends StatelessWidget {
             return RefreshIndicator(
               onRefresh: () => context
                   .read<MyArticlesCubit>()
-                  .fetchArticles(ownerUid),
+                  .fetchArticles(widget.ownerUid),
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: state.articles.length,

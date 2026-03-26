@@ -304,7 +304,7 @@ create_article/                   ai_insight/
 #### dd. Article Editing (O-002)
 **Functionality**: Full edit flow:
 - **Data Source**: `updateArticle()` and `getArticlesByOwner()` on Firestore data source
-- **Use Cases**: `UpdateArticleUseCase` and `GetArticlesByAuthorUseCase`
+- **Use Cases**: `UpdateArticleUseCase` and `GetArticlesByAuthorUseCase` (queries by `ownerUid`)
 - **Cubit**: `updateArticle()` method on `CreateArticleCubit`, `MyArticlesCubit` for fetching owner's articles by `ownerUid`
 - **UI**: `CreateArticlePage` in edit mode (pre-filled fields, "Edit Article" title, calls `updateArticle` on submit), `MyArticlesScreen` with article list + edit buttons, "My Articles" tile in Profile screen
 - **Routes**: `/EditArticle` and `/MyArticles`
@@ -377,7 +377,7 @@ create_article/                   ai_insight/
 | `3733b80` | feat: add politicalLeaning field to AI Insight + fix light theme contrast (183/183 tests) |
 | `56f7c6f` | fix: make author field read-only to prevent impersonation (185/185 tests) |
 | `f58166f` | fix: resolve compliance audit flags — model inheritance, dead deps, font assets (185/185 tests) |
-| *pending* | fix: resolve 6 audit findings — ownerUid enforcement, Firestore rules rewrite, FAB, smoke test (189/189 tests) |
+| `48ec8a2` | fix: resolve 6 audit findings — ownerUid enforcement, Firestore rules rewrite, FAB, smoke test (189/189 tests) |
 
 ### Architecture Decisions Record
 

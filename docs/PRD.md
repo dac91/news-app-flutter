@@ -115,7 +115,7 @@ Deliver a fully functional, well-architected Flutter application that:
 - **FR-3.3:** User can select an image from device gallery (via `image_picker`)
 - **FR-3.4:** Image compressed client-side before upload ([Assumption 7](./USER_RESEARCH.md#assumption-7): image handling is #1 friction point)
 - **FR-3.5:** Image uploaded to Firebase Cloud Storage at path `media/articles/{timestamp}_{filename}`
-- **FR-3.6:** Article data (title, description, content, `thumbnailURL`, timestamp, author) stored in Firestore
+- **FR-3.6:** Article data (title, description, content, `thumbnailURL`, timestamp, author, `ownerUid`) stored in Firestore
 - **FR-3.7:** Form validates required fields with inline error messages (not toast/dialog)
 - **FR-3.8:** Loading indicator with progress displayed during upload
 - **FR-3.9:** Success feedback with clear confirmation on completion
