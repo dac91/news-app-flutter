@@ -21,6 +21,9 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
+  /// Key for the SavedArticles widget so we can call refresh() on it.
+  final _savedArticlesKey = GlobalKey<SavedArticlesState>();
+
   /// Each tab kept alive via IndexedStack.
   late final List<Widget> _screens;
 
@@ -29,7 +32,7 @@ class _MainNavigationState extends State<MainNavigation> {
     super.initState();
     _screens = [
       const DailyNews(),
-      const SavedArticles(),
+      SavedArticles(key: _savedArticlesKey),
       BlocProvider(
         create: (_) => sl<CreateArticleCubit>(),
         child: const CreateArticlePage(),
@@ -84,5 +87,10 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _onTabTapped(int index) {
     setState(() => _currentIndex = index);
+    // Re-fetch saved articles when the Saved tab is selected so bookmarks
+    // made from article detail pages are immediately visible.
+    if (index == 1) {
+      _savedArticlesKey.currentState?.refresh();
+    }
   }
 }

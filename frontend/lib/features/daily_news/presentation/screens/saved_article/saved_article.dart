@@ -10,7 +10,7 @@ import '../../bloc/article/local/local_article_event.dart';
 import '../../bloc/article/local/local_article_state.dart';
 import '../../widgets/article_tile.dart';
 
-class SavedArticles extends StatelessWidget {
+class SavedArticles extends StatefulWidget {
   /// When true, shows a back button in the AppBar (push-based navigation).
   /// When false, shows no back button (tab-based navigation).
   final bool showBackButton;
@@ -18,9 +18,23 @@ class SavedArticles extends StatelessWidget {
   const SavedArticles({Key ? key, this.showBackButton = false}) : super(key: key);
 
   @override
+  State<SavedArticles> createState() => SavedArticlesState();
+}
+
+/// Public state class so [MainNavigation] can call [refresh()] via a GlobalKey.
+class SavedArticlesState extends State<SavedArticles> {
+  late final LocalArticleBloc _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = sl<LocalArticleBloc>()..add(const GetSavedArticles());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+    return BlocProvider.value(
+      value: _bloc,
       child: Scaffold(
         appBar: _buildAppBar(),
         body: _buildBody(),
@@ -28,19 +42,26 @@ class SavedArticles extends StatelessWidget {
     );
   }
 
+  /// Called by [MainNavigation] when this tab is selected.
+  /// Re-fetches saved articles to pick up bookmarks made from detail pages.
+  void refresh() {
+    _bloc.add(const GetSavedArticles());
+  }
+
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      leading: showBackButton
+      leading: widget.showBackButton
           ? Builder(
               builder: (context) => GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => _onBackButtonTapped(context),
-                child: const Icon(Ionicons.chevron_back, color: Colors.black),
+                child: Icon(Ionicons.chevron_back,
+                    color: Theme.of(context).appBarTheme.iconTheme?.color),
               ),
             )
           : null,
-      automaticallyImplyLeading: showBackButton,
-      title: const Text('Saved Articles', style: TextStyle(color: Colors.black)),
+      automaticallyImplyLeading: widget.showBackButton,
+      title: const Text('Saved Articles'),
     );
   }
 

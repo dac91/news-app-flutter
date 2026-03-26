@@ -31,7 +31,8 @@ class ArticleDetailsView extends StatelessWidget {
         builder: (context) => GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => _onBackButtonTapped(context),
-          child: const Icon(Ionicons.chevron_back, color: Colors.black),
+          child: Icon(Ionicons.chevron_back,
+              color: Theme.of(context).appBarTheme.iconTheme?.color),
         ),
       ),
       actions: [
@@ -128,7 +129,10 @@ class ArticleDetailsView extends StatelessWidget {
     return Builder(
       builder: (context) => FloatingActionButton(
         onPressed: () => _onFloatingActionButtonPressed(context),
-        child: const Icon(Ionicons.bookmark, color: Colors.white),
+        child: Icon(Ionicons.bookmark,
+            color: Theme.of(context)
+                .floatingActionButtonTheme
+                .foregroundColor),
       ),
     );
   }

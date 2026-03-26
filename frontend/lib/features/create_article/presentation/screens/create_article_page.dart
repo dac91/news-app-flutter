@@ -162,16 +162,19 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     }
   }
 
+  /// Whether the form has meaningful content worth saving as a draft.
+  /// Excludes the author field since it's auto-filled from auth.
+  bool get _hasMeaningfulContent =>
+      _titleController.text.trim().isNotEmpty ||
+      _descriptionController.text.trim().isNotEmpty ||
+      _contentController.text.trim().isNotEmpty ||
+      _uploadedImageUrl != null;
+
   void _saveDraftIfNeeded() {
     // Don't save drafts when editing an existing article
     if (_isEditMode) return;
 
-    final hasContent = _titleController.text.isNotEmpty ||
-        _descriptionController.text.isNotEmpty ||
-        _contentController.text.isNotEmpty ||
-        _authorController.text.isNotEmpty;
-
-    if (hasContent) {
+    if (_hasMeaningfulContent) {
       _draftService.saveDraft(
         title: _titleController.text,
         description: _descriptionController.text,
@@ -198,19 +201,24 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       leading: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => Navigator.pop(context),
-        child: const Icon(Ionicons.chevron_back, color: Colors.black),
+        child: Icon(Ionicons.chevron_back,
+            color: Theme.of(context).appBarTheme.iconTheme?.color),
       ),
       title: Text(
         _isEditMode ? 'Edit Article' : 'Create Article',
-        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+        style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       actions: [
         IconButton(
           icon: const Icon(Icons.drafts_outlined),
           tooltip: 'Save draft',
           onPressed: () {
-            _saveDraftIfNeeded();
-            _showSnackBar('Draft saved');
+            if (_hasMeaningfulContent) {
+              _saveDraftIfNeeded();
+              _showSnackBar('Draft saved');
+            } else {
+              _showSnackBar('Add some content before saving a draft');
+            }
           },
         ),
       ],

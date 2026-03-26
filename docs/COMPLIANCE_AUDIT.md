@@ -51,7 +51,7 @@ Each requirement is evaluated as **PASS**, **FLAG** (non-blocking concern), or *
 
 | Req | Description | Status | Evidence |
 |-----|-------------|--------|----------|
-| 3 | Comprehensive report in `docs/REPORT.md` following template | **FLAG** | Report exists with sections 1–7 (intro, learning journey, challenges, reflection, proof, overdelivery, extra). Section 5 (Proof) states screenshots will be added after device testing — currently empty. See [Flagged Item #5](#flagged-items). |
+| 3 | Comprehensive report in `docs/REPORT.md` following template | **PASS** | Report exists with sections 1–7 (intro, learning journey, challenges, reflection, proof, overdelivery, extra). Section 5 (Proof) includes 7 screenshots covering all primary screens (login, signup, home feed, article detail, saved articles, create article, profile). |
 
 ### 1.4 Overdelivery
 
@@ -144,7 +144,7 @@ Each requirement is evaluated as **PASS**, **FLAG** (non-blocking concern), or *
 | 2 | **`setState` used 5 times in `CreateArticlePage`** — Manages local UI state (`_selectedImage`, `_uploadedImageUrl`, `_selectedCategory`, draft restoration). Not business logic, but technically bypasses the Cubit for state. | **Low** | AV 3.1.2 | `create_article_page.dart` | Document that `setState` is used only for ephemeral UI state not related to business logic (Flutter's own recommendation for form fields and image selection). |
 | 3 | **`DioError` used instead of `DioException`** — Deprecated Dio 4.x API caught in `article_repository_impl.dart`. The project uses Dio 4.x (`package:dio` 4.x), which doesn't have `DioException`. | **Low** | CG1 | `article_repository_impl.dart` | Cannot fix without upgrading Dio to 5.x, which cascades into Retrofit and generated code changes. Documented as known limitation of the starter project's dependency versions. |
 | 4 | **No mock repository implementation shipped** — Assignment says "Start with mock data in use cases before connecting to real Firebase data." Tests mock interfaces (correct TDD approach). | **Low** | Assignment §2.1 | N/A | TDD mock approach at the interface level satisfies the intent. Mocking at the repository boundary is the industry-standard approach for clean architecture testing. |
-| 5 | **Report Section 5 (Proof) missing screenshots** — States "screenshots will be added after device testing." | **Medium** | Assignment §3 | `REPORT.md` | Add screenshots/recordings before submission. This section is explicitly required. |
+| ~~5~~ | ~~**Report Section 5 (Proof) missing screenshots**~~ | ~~**Medium**~~ | ~~Assignment §3~~ | ~~`REPORT.md`~~ | **RESOLVED** — 7 screenshots added to `screenshots/` folder and referenced in REPORT.md Section 5 (login, signup, home feed, article detail, saved articles, create article, profile). |
 | 6 | **`getSavedArticles()` returns `List` not `DataState`** — AV 1.4.3 requires `DataState<Type>` for data requests from an API. This is a local DB call, not an API. | **Low** | AV 1.4.3 | `article_repository.dart` | Intentional: local DB calls that can't fail from network issues don't semantically require `DataState` wrapping. The rule specifies "when requesting data from an API." |
 | 7 | **Dio/Firebase imported in `injection_container.dart`** — DI container imports provider packages to register dependencies. | **Low** | AV 1.2.4 | `injection_container.dart` | Intentional: the DI container exists outside clean architecture layers. It must wire concrete implementations by definition. This is standard clean architecture practice (the "Composition Root" pattern). |
 | 8 | **No integration tests** — Widget tests cover individual components. No end-to-end flow tests. | **Low** | CG4.2 | N/A | Would require `integration_test` package and emulator/device. Deferred as out of scope for this assignment. |
@@ -171,17 +171,16 @@ The following compliance issues were identified and **fixed** (no longer flagged
 
 | Category | Total Rules | Pass | Flag | Fail |
 |----------|------------|------|------|------|
-| Assignment Requirements (§1–4) | 19 | 17 | 2 | 0 |
+| Assignment Requirements (§1–4) | 19 | 18 | 1 | 0 |
 | Architecture Violations (AV 1.x–3.x) | 25 | 21 | 4 | 0 |
 | Coding Guidelines (CG1–CG6) | 12 | 10 | 2 | 0 |
-| **Total** | **56** | **48** | **8** | **0** |
+| **Total** | **56** | **49** | **7** | **0** |
 
-**No hard failures.** All assignment deliverables are implemented. 8 items flagged — 1 medium severity (report screenshots), 7 low (naming convention, setState usage, Dio version, mock impl, DataState for local DB, DI imports, no integration tests, missing abstract interface).
+**No hard failures.** All assignment deliverables are implemented. 7 items flagged — all low severity (naming convention, setState usage, Dio version, mock impl, DataState for local DB, DI imports, no integration tests). Each has a documented justification.
 
 ### Priority Actions Before Submission
 
-1. **MEDIUM** — Add screenshots/recordings to `REPORT.md` Section 5
-2. **LOW** — All remaining flags are documented deviations with clear justification
+All medium-severity flags have been resolved. Remaining 7 flags are low-severity documented deviations with clear justification — no action required.
 
 ---
 
