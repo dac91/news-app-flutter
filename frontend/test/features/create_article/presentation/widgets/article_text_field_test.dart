@@ -20,6 +20,7 @@ void main() {
       int maxLength = 200,
       int maxLines = 1,
       String? Function(String?)? validator,
+      bool readOnly = false,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -31,6 +32,7 @@ void main() {
               maxLength: maxLength,
               maxLines: maxLines,
               validator: validator,
+              readOnly: readOnly,
             ),
           ),
         ),
@@ -146,6 +148,33 @@ void main() {
 
       // Verify the widget renders without error with maxLines > 1
       expect(find.byType(TextFormField), findsOneWidget);
+    });
+
+    testWidgets('readOnly field shows lock icon and prevents editing',
+        (tester) async {
+      controller.text = 'Locked Author';
+      await tester.pumpWidget(buildTestWidget(
+        label: 'Author',
+        hint: 'Author name',
+        readOnly: true,
+      ));
+
+      // Lock icon should be present
+      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+
+      // Text should be displayed
+      expect(find.text('Locked Author'), findsOneWidget);
+
+      // Attempting to enter text should not change the value
+      await tester.enterText(find.byType(TextFormField), 'Hacker Name');
+      expect(controller.text, 'Locked Author');
+    });
+
+    testWidgets('non-readOnly field does not show lock icon',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(readOnly: false));
+
+      expect(find.byIcon(Icons.lock_outline), findsNothing);
     });
   });
 }

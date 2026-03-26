@@ -13,6 +13,7 @@ class ArticleTextField extends StatelessWidget {
   final int maxLines;
   final String? Function(String?)? validator;
   final TextInputAction textInputAction;
+  final bool readOnly;
 
   const ArticleTextField({
     Key? key,
@@ -23,6 +24,7 @@ class ArticleTextField extends StatelessWidget {
     this.maxLines = 1,
     this.validator,
     this.textInputAction = TextInputAction.next,
+    this.readOnly = false,
   }) : super(key: key);
 
   @override
@@ -34,9 +36,16 @@ class ArticleTextField extends StatelessWidget {
         maxLength: maxLength,
         maxLines: maxLines,
         textInputAction: textInputAction,
+        readOnly: readOnly,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
+          suffixIcon: readOnly
+              ? const Tooltip(
+                  message: 'Set from your account profile',
+                  child: Icon(Icons.lock_outline, size: 18),
+                )
+              : null,
         ),
         validator: validator ?? _defaultValidator,
       ),

@@ -163,7 +163,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         _titleController.text = draft['title'] ?? '';
         _descriptionController.text = draft['description'] ?? '';
         _contentController.text = draft['content'] ?? '';
-        _authorController.text = draft['author'] ?? '';
+        // Don't restore author from draft — always use authenticated user's name
         _uploadedImageUrl = draft['imageUrl'];
       });
     }
@@ -301,6 +301,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
           hint: 'Author name',
           maxLength: 100,
           textInputAction: TextInputAction.done,
+          readOnly: true,
         ),
       ],
     );
@@ -411,6 +412,10 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       return;
     }
 
+    // Always use the authenticated user's display name as the author.
+    // The text field is read-only, but this enforces it server-side too.
+    final author = _resolveAuthorName();
+
     final cubit = context.read<CreateArticleCubit>();
 
     if (_isEditMode) {
@@ -419,7 +424,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         content: _contentController.text.trim(),
-        author: _authorController.text.trim(),
+        author: author,
         imageUrl: _uploadedImageUrl!,
         category: _selectedCategory,
         createdAt: widget.articleToEdit!.createdAt,
@@ -429,11 +434,28 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         content: _contentController.text.trim(),
-        author: _authorController.text.trim(),
+        author: author,
         imageUrl: _uploadedImageUrl!,
         category: _selectedCategory,
       );
     }
+  }
+
+  /// Resolves the author name from the authenticated user's profile.
+  ///
+  /// Falls back to the text controller value (for edit mode where the
+  /// original author might differ), then to 'Anonymous' as a last resort.
+  String _resolveAuthorName() {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      final name = authState.user.displayName;
+      if (name != null && name.isNotEmpty) {
+        return name;
+      }
+    }
+    // Fallback: use whatever is in the field (edit mode) or 'Anonymous'
+    final fieldValue = _authorController.text.trim();
+    return fieldValue.isNotEmpty ? fieldValue : 'Anonymous';
   }
 
   // --- State listener ---
