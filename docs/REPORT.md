@@ -12,7 +12,29 @@ What I want this report to demonstrate isn't that I can write Flutter code by ha
 
 When I first received this assignment, I was genuinely excited. The brief — extending a clean architecture Flutter app with a Firebase-backed article creation feature — sits at the intersection of my two worlds: understanding what to build (product) and ensuring it's built right (engineering). I decided to approach it like a real product task, not a coding exercise.
 
-## 2. Process & Methodology
+## 2. Learning Journey & Process
+
+### What I Learned Along the Way
+
+My engineering background means I understand programming logic, architecture patterns, and how systems fit together. But I haven't written production code daily in a decade — my expertise has been in directing the people who do. This assignment required me to learn and deepen my understanding in several areas:
+
+- **Symmetry's specific architecture rules**: The `ARCHITECTURE_VIOLATIONS.md` (50 rules) and `CODING_GUIDELINES.md` (6 rules) are more prescriptive than typical clean architecture guides. I spent time mapping each rule to the existing codebase to understand what was and wasn't compliant — and discovered the starter code violated several of its own rules. This taught me that architecture docs are only useful when enforced.
+- **AI-assisted development workflow**: Orchestrating multiple AI agents (OpenCode CLI, VSCode + GPT 5.4, Stitch) to work in parallel on the same codebase was new territory. I learned that clear requirements and persistent context (PRDs, tracking docs, todo lists) are just as critical for AI agents as they are for human engineers — maybe more so, since AI loses context between sessions.
+- **Flutter state management nuances**: Understanding when to use Cubit vs full Bloc, how `IndexedStack` preserves state across tabs, and how factory-registered cubits differ from singletons — these were concepts I understood architecturally but needed to internalize to make correct decisions during development.
+- **Firebase security rules**: Writing server-side schema validation (`hasAll()`, type checks, `size()` constraints, `request.auth.uid` ownership enforcement) was more involved than I expected. The rules language is its own DSL that required reading Firebase documentation carefully.
+- **Gemini API structured output**: Getting reliable JSON from an LLM required prompt engineering with exact field specifications, type constraints, and defensive parsing with fallbacks for every field. The model doesn't always respect your schema.
+- **Dio 4.x vs 5.x differences**: The project uses Dio 4 (`DioError`), not Dio 5 (`DioException`). This was a constant source of AI hallucination — the AI would confidently use the wrong API. I learned to always verify library versions in `pubspec.lock` before accepting generated code.
+
+**Resources I relied on**:
+- Symmetry's own docs (`APP_ARCHITECTURE.md`, `ARCHITECTURE_VIOLATIONS.md`, `CODING_GUIDELINES.md`) — primary reference for all architecture decisions
+- Official Flutter documentation (widget catalog, `image_picker`, `flutter_bloc`)
+- Firebase documentation for Firestore security rules and Cloud Storage rules
+- Reuters Digital News Report 2025, Trusting News surveys, and Grok/X fact-checking research — for product decisions
+- OpenCode documentation for multi-agent orchestration and MCP integration
+
+### The Process I Followed
+
+Here is the end-to-end methodology I used, from understanding the product to shipping the final build:
 
 ### Phase 1: Product Understanding
 
@@ -210,6 +232,29 @@ I believe in transparency, so here's what didn't work perfectly:
 
 ## 5. Proof of the Project
 
+### How to Run the Project
+
+```bash
+# Clone the repository
+git clone https://github.com/dac91/news-app-flutter.git
+cd news-app-flutter/frontend
+
+# Install dependencies
+flutter pub get
+
+# Run on Android emulator (with API keys)
+flutter run --dart-define=NEWS_API_KEY=4277a982e60b424fbf08a4ddb6fffcdf \
+            --dart-define=GEMINI_API_KEY=AIzaSyAz1Ild7xTUdYigNXpYUc2uLkYk-MM4nkc
+
+# Run tests
+flutter test
+
+# Run static analysis
+flutter analyze
+```
+
+**Prerequisites**: Flutter 3.19.1, Android SDK, an Android emulator or device. Firebase is already configured — no additional setup needed for the hosted project.
+
 ### Development Workflow Screenshots
 
 These images show the actual development process — not just the final product:
@@ -364,12 +409,20 @@ Beyond the assignment requirements, I prioritized features based on the research
 
 ### 2. Prototypes & Documentation Created
 
-- **Product Research Document** (`docs/USER_RESEARCH.md`): 7-platform competitive analysis, JTBD for both user types, 12 validated assumptions, 21 verified source URLs with dates and reliability ratings.
-- **Product Requirements Document** (`docs/PRD.md`): Mission, vision, target users, personas, feature specs, prioritization matrix, success criteria, architecture decisions.
-- **DB Schema Documentation** (`backend/docs/DB_SCHEMA.md`): Single source of truth for Firestore collection structure, field types, constraints, and validation rules.
-- **Feature Tracking Matrix** (`docs/FEATURE_TRACKING.md`): 133 tracked items across 6 categories with status tracking.
-- **Compliance Audit** (`docs/COMPLIANCE_AUDIT.md`): Systematic audit against Symmetry's 50 architecture rules and 6 coding guidelines.
-- **Assignment Requirements Analysis** (`docs/ASSIGNMENT_REQUIREMENTS.md`): Decomposed the brief into explicit, testable requirements.
+All documents are in the repository at [`docs/`](https://github.com/dac91/news-app-flutter/tree/main/docs) and [`backend/docs/`](https://github.com/dac91/news-app-flutter/tree/main/backend/docs):
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| **Product Research** | [`docs/USER_RESEARCH.md`](https://github.com/dac91/news-app-flutter/blob/main/docs/USER_RESEARCH.md) | 7-platform competitive analysis, JTBD for both user types, 12 validated assumptions, 21 verified source URLs with dates and reliability ratings |
+| **Product Requirements** | [`docs/PRD.md`](https://github.com/dac91/news-app-flutter/blob/main/docs/PRD.md) | Mission, vision, target users, personas, feature specs, prioritization matrix, success criteria, architecture decisions |
+| **DB Schema** | [`backend/docs/DB_SCHEMA.md`](https://github.com/dac91/news-app-flutter/blob/main/backend/docs/DB_SCHEMA.md) | Single source of truth for Firestore `articles` and `ai_insights` collection structure, field types, constraints, and validation rules |
+| **Feature Tracking** | [`docs/FEATURE_TRACKING.md`](https://github.com/dac91/news-app-flutter/blob/main/docs/FEATURE_TRACKING.md) | 133 tracked items across 6 categories with status tracking (129 complete, 4 deferred) |
+| **Compliance Audit** | [`docs/COMPLIANCE_AUDIT.md`](https://github.com/dac91/news-app-flutter/blob/main/docs/COMPLIANCE_AUDIT.md) | Systematic audit against Symmetry's 50 architecture rules and 6 coding guidelines — 49 PASS, 7 FLAG, 0 FAIL |
+| **Refactor Report** | [`docs/REFACTOR_REPORT.md`](https://github.com/dac91/news-app-flutter/blob/main/docs/REFACTOR_REPORT.md) | 10 bugs and architecture violations found and fixed in the starter code, with root cause analysis |
+| **Assignment Analysis** | [`docs/ASSIGNMENT_REQUIREMENTS.md`](https://github.com/dac91/news-app-flutter/blob/main/docs/ASSIGNMENT_REQUIREMENTS.md) | Decomposed the assignment brief into explicit, testable requirements |
+| **Emulator Setup** | [`backend/docs/EMULATOR_SETUP.md`](https://github.com/dac91/news-app-flutter/blob/main/backend/docs/EMULATOR_SETUP.md) | Instructions for running the Firebase backend locally with the Emulator Suite |
+
+**Firestore Security Rules** ([`backend/firestore.rules`](https://github.com/dac91/news-app-flutter/blob/main/backend/firestore.rules)) serve as both a prototype and production artifact — they implement server-side schema validation, ownership enforcement, and field immutability. Can be tested locally using the Firebase Emulator Suite (see `EMULATOR_SETUP.md` for instructions).
 
 ### 3. How Can You Improve This
 
