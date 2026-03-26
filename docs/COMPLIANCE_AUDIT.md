@@ -4,7 +4,7 @@
 **Auditor:** Diego  
 **Status:** Complete  
 **Source Files:** 93 Dart files in `frontend/lib/` (4 features: auth, create_article, daily_news, ai_insight)  
-**Test Suite:** 189 tests across 28 test files — all passing  
+**Test Suite:** 242 tests across 36 test files — all passing  
 **Static Analysis:** 0 errors, 0 warnings (1 info in generated `.g.dart` file)
 
 ---
@@ -65,7 +65,7 @@ Each requirement is evaluated as **PASS**, **FLAG** (non-blocking concern), or *
 | e | Stateful error recovery (preserves image URL on article submission failure) | **PASS** |
 | f | API key security hardening (`--dart-define`) | **PASS** |
 | g | Local BLoC error handling (`LocalArticlesError` state + retry UI) | **PASS** |
-| h | 189 tests across all layers (domain, data, presentation) for 4 features (auth, create_article, daily_news, ai_insight) | **PASS** |
+| h | 242 tests across all layers (domain, data, presentation) for 4 features (auth, create_article, daily_news, ai_insight) | **PASS** |
 | i | User authentication (Firebase Auth with full clean architecture) | **PASS** |
 | j | Article editing (My Articles screen + edit mode) | **PASS** |
 | k | Search, categories, pagination, offline, drafts, sharing, splash, dark mode, bottom nav | **PASS** |
@@ -132,7 +132,7 @@ Each requirement is evaluated as **PASS**, **FLAG** (non-blocking concern), or *
 | CG3 | **Small functions** — SRP, low nesting, descriptive names, few arguments | **PASS** | Pages decomposed into `_buildAppBar`, `_buildBody`, `_buildFormFields`, `_buildImageSection`, `_buildSubmitButton`, etc. Max nesting depth ≤ 2. |
 | CG3.5 | Keep number of arguments low | **PASS** | Use case `call()` takes 1 param. Cubit methods take 0–5 named params. Widget constructors use named params (acceptable per Flutter convention). |
 | CG3.6 | Command Query Separation | **PASS** | Functions either mutate state or return data, not both. |
-| CG4 | **TDD** — Test all functionality | **PASS** | 189 tests across 28 test files covering all four features: `auth` (30 tests), `create_article` (80 tests), `daily_news` (26 tests), `ai_insight` (53 tests). All layers tested: domain (entities, params, use cases), data (models, repositories), presentation (cubits, blocs, widgets). |
+| CG4 | **TDD** — Test all functionality | **PASS** | 242 tests across 36 test files covering all four features: `auth` (42 tests), `create_article` (91 tests), `daily_news` (50 tests), `ai_insight` (53 tests). All layers tested: domain (entities, params, use cases), data (models, repositories), presentation (cubits, blocs, widgets). |
 | CG4.2 | Integration tests for user journeys | **PASS** | `integration_test/app_smoke_test.dart` verifies app boot-to-home-screen smoke test (checks `MyApp`, `Scaffold`, and `BottomNavigationBar`). `integration_test` SDK package added to `pubspec.yaml`. Widget tests cover individual component flows. |
 | CG5 | **Small classes** — Single responsibility, few instance variables | **PASS** | All classes have a single purpose. Cubit/Bloc classes have 1–3 instance variables. Entity/model classes match their schema exactly. |
 | CG6 | **Abstract classes** for isolation | **PASS** | `UseCase<Type, Params>`, `CreateArticleRepository`, `ArticleRepository`, `AuthRepository`, `AiInsightRepository`, `FirestoreArticleDataSource`, `StorageArticleDataSource`, `FirebaseAuthDataSource`, `GeminiDataSource`, `InsightCacheDataSource`, `ConnectivityServiceBase` — all abstract interfaces enabling testability and layer isolation. |

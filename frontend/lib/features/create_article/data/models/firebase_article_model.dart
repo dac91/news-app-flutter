@@ -1,11 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:news_app_clean_architecture/features/create_article/domain/entities/firebase_article_entity.dart';
 
 /// Data model for articles stored in Firestore.
 ///
 /// Extends [FirebaseArticleEntity] and handles serialization to/from
-/// Firestore JSON format. Per architecture rules (AV 1.3.2), implements
-/// both [fromRawData] (factory) and [toEntity] conversion methods.
+/// plain JSON maps. Per architecture rules (AV 1.2.4), this model does NOT
+/// import any provider package (e.g. `cloud_firestore`). Firestore-specific
+/// types (`Timestamp`, `FieldValue`) are handled in the data source layer.
+///
+/// Per AV 1.3.2, implements both [fromRawData] (factory) and [toEntity]
+/// conversion methods.
 class FirebaseArticleModel extends FirebaseArticleEntity {
   const FirebaseArticleModel({
     String? id,
@@ -29,10 +32,14 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
           createdAt: createdAt,
         );
 
-  /// Creates a model from Firestore document data.
+  /// Creates a model from a plain data map and a document ID.
   ///
-  /// The [docId] is the Firestore document ID, passed separately since
-  /// it's not stored inside the document fields.
+  /// The [docId] is the document ID, passed separately since it's not
+  /// stored inside the document fields.
+  ///
+  /// The `createdAt` field is expected as a [DateTime] — the data source
+  /// is responsible for converting provider-specific types (e.g. Firestore
+  /// `Timestamp`) to [DateTime] before calling this factory.
   factory FirebaseArticleModel.fromRawData(
     Map<String, dynamic> data,
     String docId,
@@ -46,17 +53,15 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       thumbnailUrl: data['thumbnailURL'] as String? ?? '',
       ownerUid: data['ownerUid'] as String? ?? '',
       category: data['category'] as String?,
-      createdAt: data['createdAt'] != null
-          ? (data['createdAt'] as Timestamp).toDate()
-          : null,
+      createdAt: data['createdAt'] as DateTime?,
     );
   }
 
-  /// Converts the model to a Firestore-compatible JSON map for creation.
+  /// Converts the model to a plain JSON map for creation.
   ///
-  /// Uses [FieldValue.serverTimestamp()] for `createdAt` to ensure
-  /// the timestamp is set server-side (preventing client clock manipulation,
-  /// as enforced by Firestore rules).
+  /// The `createdAt` field is set to `null` as a sentinel — the data source
+  /// replaces it with the provider's server-timestamp mechanism (e.g.
+  /// `FieldValue.serverTimestamp()` for Firestore).
   Map<String, dynamic> toJson() {
     return {
       'title': title,
@@ -66,14 +71,15 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       'thumbnailURL': thumbnailUrl,
       'ownerUid': ownerUid,
       if (category != null) 'category': category,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': null, // sentinel — data source injects server timestamp
     };
   }
 
-  /// Converts the model to a JSON map for Firestore updates.
+  /// Converts the model to a JSON map for updates.
   ///
-  /// Unlike [toJson], this does NOT overwrite `createdAt` or `ownerUid`
-  /// since those fields are immutable after creation (enforced by rules).
+  /// Unlike [toJson], this preserves the existing `createdAt` value (as a
+  /// [DateTime]) so the data source can convert it to the provider format.
+  /// If `createdAt` is null, the data source should use a server timestamp.
   Map<String, dynamic> toUpdateJson() {
     return {
       'title': title,
@@ -83,7 +89,7 @@ class FirebaseArticleModel extends FirebaseArticleEntity {
       'thumbnailURL': thumbnailUrl,
       'ownerUid': ownerUid,
       if (category != null) 'category': category,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt, // DateTime or null — data source converts
     };
   }
 

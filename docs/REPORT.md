@@ -158,16 +158,22 @@ create_article/                   ai_insight/
 ```
 
 ### Test Coverage
-189 tests across all layers — all passing:
-- **Auth Domain**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
-- **Auth Data**: 5 tests (model conversion, Firebase user mapping, equality)
+242 tests across all layers — all passing:
+- **Auth Domain — Entities/Params**: 8 tests (sign-in params equality: 4, sign-up params equality: 4)
+- **Auth Domain — Use Cases**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
+- **Auth Data — Models**: 5 tests (model conversion, Firebase user mapping, equality)
+- **Auth Data — Repository**: 12 tests (signIn/signUp/signOut success/failure, getCurrentUser, authStateChanges)
 - **Auth Presentation**: 13 tests (cubit state transitions, sign-in/up/out, auth state stream)
-- **Create Article Domain**: 13 tests (create/upload/update/getByOwner use cases)
-- **Create Article Data**: 15 tests (model serialization incl. ownerUid/category, repository success/failure/getByOwner, entity-model conversion)
+- **Create Article Domain — Use Cases**: 13 tests (create/upload/update/getByOwner use cases)
+- **Create Article Domain — Params**: 10 tests (create_article_params: 6, upload_article_image_params: 4)
+- **Create Article Data — Models**: 15 tests (model serialization incl. ownerUid/category, repository success/failure/getByOwner, entity-model conversion)
 - **Create Article Presentation — Cubit**: 17 tests (state transitions for create/update/upload/reset, error handling, null use case guard)
 - **Create Article Presentation — Widgets**: 23 tests (ArticleTextField: 9 incl. readOnly, ImagePickerWidget: 7, SubmitArticleButton: 7)
 - **My Articles Cubit**: 6 tests (fetch success, empty, error, exception, empty ownerUid guard)
-- **Daily News Domain**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
+- **Daily News Domain — Entities**: 5 tests (entity equality, nullable fields, props)
+- **Daily News Domain — Use Cases**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
+- **Daily News Data — Models**: 8 tests (fromJson, fromRawData alias, fromEntity, toEntity, default image)
+- **Daily News Data — Repository**: 10 tests (offline fallback, cache, API success/error/exception, search query, getSavedArticles, save/remove)
 - **Daily News Presentation**: 11 tests (RemoteArticlesBloc: 5, LocalArticleBloc: 6)
 - **AI Insight Domain**: 19 tests (entity equality/props: 5, params equality/cacheKey: 10, use case success/failure/null-guard: 4)
 - **AI Insight Data**: 24 tests (model fromJson/toJson/fromEntity/toEntity/equality: 14, repository cache-hit/miss/resilience: 10)
@@ -400,7 +406,7 @@ create_article/                   ai_insight/
 | Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 189 (all passing)
+- **Total tests**: 242 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 60+ (production code, tests, documentation)
 - **Features implemented**: 129 of 133 tracked items (97%)

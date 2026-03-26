@@ -66,9 +66,9 @@ void main() {
         expect(json['author'], equals('Test Author'));
         expect(json['thumbnailURL'], equals('https://example.com/image.jpg'));
         expect(json['ownerUid'], equals('uid-123'));
-        // createdAt is FieldValue.serverTimestamp() — can't compare directly,
-        // but we can verify the key exists
+        // createdAt is null sentinel — data source replaces with server timestamp
         expect(json.containsKey('createdAt'), isTrue);
+        expect(json['createdAt'], isNull);
       });
 
       test('does not include id in JSON (Firestore manages document IDs)', () {

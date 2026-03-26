@@ -265,4 +265,4 @@
 
 > **Note on deferred items**: O-004 (Rich Text Editor), O-006 (Multi-Image Gallery), and O-008 (Push Notifications) were deferred as low-ROI for the assignment scope — they would add complexity without demonstrating additional architectural skill. O-011 (CI/CD Pipeline) is not relevant for this assignment submission but would be essential in a production environment. A GitHub Actions workflow running `flutter analyze`, `flutter test`, and `flutter build apk` on every push to `main` would be the standard setup.
 > 
-> **Test counts**: 189 total tests — auth (32), create_article (80), daily_news (24), ai_insight (53). All passing.
+> **Test counts**: 242 total tests — auth (42), create_article (91), daily_news (50), ai_insight (53). All passing.
