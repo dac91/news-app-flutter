@@ -42,6 +42,7 @@ void main() {
     id: 1,
     title: 'Saved Article',
     author: 'Author',
+    url: 'https://example.com/saved-article',
   );
 
   group('LocalArticleBloc', () {
@@ -84,10 +85,14 @@ void main() {
     });
 
     test('SaveArticle event saves then reloads articles', () async {
-      // Arrange
+      // Arrange — first getSaved() returns [] (duplicate check), second returns [tArticle] (reload)
+      var callCount = 0;
+      when(() => mockGetSaved()).thenAnswer((_) async {
+        callCount++;
+        return callCount == 1 ? [] : [tArticle];
+      });
       when(() => mockSave(params: any(named: 'params')))
           .thenAnswer((_) async {});
-      when(() => mockGetSaved()).thenAnswer((_) async => [tArticle]);
 
       final states = <LocalArticlesState>[];
       bloc.stream.listen(states.add);
@@ -98,15 +103,19 @@ void main() {
 
       // Assert
       verify(() => mockSave(params: tArticle)).called(1);
-      verify(() => mockGetSaved()).called(1);
+      verify(() => mockGetSaved()).called(2); // duplicate check + reload
       expect(states.last, isA<LocalArticlesDone>());
     });
 
     test('RemoveArticle event removes then reloads articles', () async {
-      // Arrange
+      // Arrange — first getSaved() returns [tArticle] (URL lookup), second returns [] (reload)
+      var callCount = 0;
+      when(() => mockGetSaved()).thenAnswer((_) async {
+        callCount++;
+        return callCount == 1 ? [tArticle] : [];
+      });
       when(() => mockRemove(params: any(named: 'params')))
           .thenAnswer((_) async {});
-      when(() => mockGetSaved()).thenAnswer((_) async => []);
 
       final states = <LocalArticlesState>[];
       bloc.stream.listen(states.add);
@@ -117,13 +126,14 @@ void main() {
 
       // Assert
       verify(() => mockRemove(params: tArticle)).called(1);
-      verify(() => mockGetSaved()).called(1);
+      verify(() => mockGetSaved()).called(2); // URL lookup + reload
       expect(states.last, isA<LocalArticlesDone>());
       expect(states.last.articles, isEmpty);
     });
 
     test('emits LocalArticlesError when SaveArticle fails', () async {
-      // Arrange
+      // Arrange — getSaved succeeds (no duplicates) but save throws
+      when(() => mockGetSaved()).thenAnswer((_) async => []);
       when(() => mockSave(params: any(named: 'params')))
           .thenThrow(Exception('Save failed'));
 
@@ -139,7 +149,8 @@ void main() {
     });
 
     test('emits LocalArticlesError when RemoveArticle fails', () async {
-      // Arrange
+      // Arrange — getSaved returns [tArticle] (URL lookup succeeds) but remove throws
+      when(() => mockGetSaved()).thenAnswer((_) async => [tArticle]);
       when(() => mockRemove(params: any(named: 'params')))
           .thenThrow(Exception('Remove failed'));
 

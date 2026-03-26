@@ -34,7 +34,14 @@ import 'package:news_app_clean_architecture/injection_container.dart';
 class CreateArticlePage extends StatefulWidget {
   final FirebaseArticleEntity? articleToEdit;
 
-  const CreateArticlePage({Key? key, this.articleToEdit}) : super(key: key);
+  /// When false, the back button is hidden (used when shown as a tab).
+  final bool showBackButton;
+
+  const CreateArticlePage({
+    Key? key,
+    this.articleToEdit,
+    this.showBackButton = true,
+  }) : super(key: key);
 
   @override
   State<CreateArticlePage> createState() => _CreateArticlePageState();
@@ -198,12 +205,15 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      leading: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.pop(context),
-        child: Icon(Ionicons.chevron_back,
-            color: Theme.of(context).appBarTheme.iconTheme?.color),
-      ),
+      leading: widget.showBackButton
+          ? GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.pop(context),
+              child: Icon(Ionicons.chevron_back,
+                  color: Theme.of(context).appBarTheme.iconTheme?.color),
+            )
+          : null,
+      automaticallyImplyLeading: widget.showBackButton,
       title: Text(
         _isEditMode ? 'Edit Article' : 'Create Article',
         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -215,7 +225,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
           onPressed: () {
             if (_hasMeaningfulContent) {
               _saveDraftIfNeeded();
-              _showSnackBar('Draft saved');
+              _showSnackBar('Draft saved — it will be restored next time you open this page');
             } else {
               _showSnackBar('Add some content before saving a draft');
             }

@@ -35,7 +35,7 @@ class _MainNavigationState extends State<MainNavigation> {
       SavedArticles(key: _savedArticlesKey),
       BlocProvider(
         create: (_) => sl<CreateArticleCubit>(),
-        child: const CreateArticlePage(),
+        child: const CreateArticlePage(showBackButton: false),
       ),
       const ProfileScreen(),
     ];

@@ -36,7 +36,13 @@ class LocalArticleBloc extends Bloc<LocalArticlesEvent,LocalArticlesState> {
   
   void onRemoveArticle(RemoveArticle removeArticle,Emitter<LocalArticlesState> emit) async {
     try {
-      await _removeArticleUseCase(params: removeArticle.article);
+      // Floor's @delete matches by primary key (id). Articles from the API
+      // may have id == null, so look up the persisted row by URL first.
+      final saved = await _getSavedArticleUseCase();
+      final match = saved.where((a) => a.url == removeArticle.article?.url);
+      if (match.isNotEmpty) {
+        await _removeArticleUseCase(params: match.first);
+      }
       final articles = await _getSavedArticleUseCase();
       emit(LocalArticlesDone(articles));
     } catch (e) {
@@ -48,7 +54,12 @@ class LocalArticleBloc extends Bloc<LocalArticlesEvent,LocalArticlesState> {
 
   void onSaveArticle(SaveArticle saveArticle,Emitter<LocalArticlesState> emit) async {
     try {
-      await _saveArticleUseCase(params: saveArticle.article);
+      // Prevent duplicates — skip if an article with the same URL is already saved.
+      final saved = await _getSavedArticleUseCase();
+      final alreadySaved = saved.any((a) => a.url == saveArticle.article?.url);
+      if (!alreadySaved) {
+        await _saveArticleUseCase(params: saveArticle.article);
+      }
       final articles = await _getSavedArticleUseCase();
       emit(LocalArticlesDone(articles));
     } catch (e) {

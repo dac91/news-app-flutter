@@ -7,22 +7,44 @@ import '../../../../../injection_container.dart';
 import '../../../domain/entities/article.dart';
 import '../../bloc/article/local/local_article_bloc.dart';
 import '../../bloc/article/local/local_article_event.dart';
+import '../../bloc/article/local/local_article_state.dart';
 
-class ArticleDetailsView extends StatelessWidget {
+class ArticleDetailsView extends StatefulWidget {
   final ArticleEntity? article;
 
   const ArticleDetailsView({Key? key, this.article}) : super(key: key);
 
   @override
+  State<ArticleDetailsView> createState() => _ArticleDetailsViewState();
+}
+
+class _ArticleDetailsViewState extends State<ArticleDetailsView> {
+  bool _isBookmarked = false;
+
+  @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<LocalArticleBloc>(),
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _buildBody(),
-        floatingActionButton: _buildFloatingActionButton(),
+      create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+      child: BlocListener<LocalArticleBloc, LocalArticlesState>(
+        listener: _onLocalArticlesState,
+        child: Scaffold(
+          appBar: _buildAppBar(),
+          body: _buildBody(),
+          floatingActionButton: _buildFloatingActionButton(),
+        ),
       ),
     );
+  }
+
+  /// Updates [_isBookmarked] whenever the saved articles list changes.
+  void _onLocalArticlesState(BuildContext context, LocalArticlesState state) {
+    if (state is LocalArticlesDone) {
+      final saved = state.articles ?? [];
+      final isSaved = saved.any((a) => a.url == widget.article?.url);
+      if (_isBookmarked != isSaved) {
+        setState(() => _isBookmarked = isSaved);
+      }
+    }
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -67,7 +89,7 @@ class ArticleDetailsView extends StatelessWidget {
         children: [
           // Title
           Text(
-            article?.title ?? '',
+            widget.article?.title ?? '',
             style: const TextStyle(
                 fontFamily: 'Butler',
                 fontSize: 20,
@@ -81,7 +103,7 @@ class ArticleDetailsView extends StatelessWidget {
               const Icon(Ionicons.time_outline, size: 16),
               const SizedBox(width: 4),
               Text(
-                article?.publishedAt ?? '',
+                widget.article?.publishedAt ?? '',
                 style: const TextStyle(fontSize: 12),
               ),
             ],
@@ -92,7 +114,8 @@ class ArticleDetailsView extends StatelessWidget {
   }
 
   Widget _buildArticleImage() {
-    final heroTag = 'article-image-${article?.id ?? article?.title?.hashCode ?? 0}';
+    final heroTag =
+        'article-image-${widget.article?.id ?? widget.article?.title?.hashCode ?? 0}';
     return Hero(
       tag: heroTag,
       child: Container(
@@ -100,7 +123,7 @@ class ArticleDetailsView extends StatelessWidget {
         height: 250,
         margin: const EdgeInsets.only(top: 14),
         child: Image.network(
-          article?.urlToImage ?? kDefaultImage,
+          widget.article?.urlToImage ?? kDefaultImage,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => Container(
             color: Colors.grey.shade200,
@@ -119,7 +142,7 @@ class ArticleDetailsView extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
       child: Text(
-        '${article?.description ?? ''}\n\n${article?.content ?? ''}',
+        '${widget.article?.description ?? ''}\n\n${widget.article?.content ?? ''}',
         style: const TextStyle(fontSize: 16),
       ),
     );
@@ -129,10 +152,12 @@ class ArticleDetailsView extends StatelessWidget {
     return Builder(
       builder: (context) => FloatingActionButton(
         onPressed: () => _onFloatingActionButtonPressed(context),
-        child: Icon(Ionicons.bookmark,
-            color: Theme.of(context)
-                .floatingActionButtonTheme
-                .foregroundColor),
+        child: Icon(
+          _isBookmarked ? Ionicons.bookmark : Ionicons.bookmark_outline,
+          color: Theme.of(context)
+              .floatingActionButtonTheme
+              .foregroundColor,
+        ),
       ),
     );
   }
@@ -142,23 +167,38 @@ class ArticleDetailsView extends StatelessWidget {
   }
 
   void _onFloatingActionButtonPressed(BuildContext context) {
-    final currentArticle = article;
+    final currentArticle = widget.article;
     if (currentArticle == null) return;
 
-    BlocProvider.of<LocalArticleBloc>(context).add(SaveArticle(currentArticle));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Colors.black,
-        content: Text('Article saved successfully.'),
-      ),
-    );
+    final bloc = BlocProvider.of<LocalArticleBloc>(context);
+
+    if (_isBookmarked) {
+      bloc.add(RemoveArticle(currentArticle));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Bookmark removed'),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } else {
+      bloc.add(SaveArticle(currentArticle));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Article bookmarked'),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    }
   }
 
   void _onSharePressed(BuildContext context) {
-    final title = article?.title ?? 'Check out this article';
-    final url = article?.url ?? '';
-    final shareText =
-        url.isNotEmpty ? '$title\n\n$url' : title;
+    final title = widget.article?.title ?? 'Check out this article';
+    final url = widget.article?.url ?? '';
+    final shareText = url.isNotEmpty ? '$title\n\n$url' : title;
     Share.share(shareText, subject: title);
   }
 }
