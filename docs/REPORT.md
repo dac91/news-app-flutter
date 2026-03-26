@@ -2,108 +2,223 @@
 
 ## 1. Introduction
 
-When I first received this assignment, I was genuinely excited. The brief — extending a clean architecture Flutter app with a Firebase-backed article creation feature — hits exactly the kind of work I enjoy: taking an existing codebase, understanding its patterns deeply, then building something new that feels native to it.
+I want to be upfront about something: this entire project was built using AI tools. I directed every decision, but AI agents wrote the code.
 
-My background is in mobile and full-stack development, with experience across Flutter, React Native, and backend systems. I've worked with Firebase extensively and I'm comfortable with the clean architecture pattern. What made this assignment interesting wasn't the individual technologies — it was the challenge of doing it *right*: maintaining strict architectural boundaries, writing proper tests, and making real product decisions rather than just shipping code.
+My background is in engineering — I studied it, I understand the logic of programming, and I know what good code looks like. But for the past 10 years, I've been on the product management side: leading engineering teams, defining product strategy, shipping software at various stages of complexity. I've worked alongside engineers across mobile, web, and backend systems. I understand clean architecture not because I write it daily, but because I've reviewed it, debated it, and made prioritization calls around it for a decade.
 
-I decided to approach this like a real product task, not a coding exercise. That meant: research first, justify decisions with data, design before building, test before shipping, and document everything.
+For this assignment, I used AI as my engineering team — and I ran it the same way I'd run a real team: research first, plan thoroughly, build incrementally, test continuously. Every feature decision is backed by data. Every architectural choice follows the guidelines. The AI wrote the code; I made the product decisions and orchestrated the process.
 
-## 2. Learning Journey
+What I want this report to demonstrate isn't that I can write Flutter code by hand. It's that the future of product development includes people who can bridge product thinking and engineering execution through AI — and that the process, rigor, and judgment behind the code matters as much as the code itself.
 
-### Technologies I Was Already Comfortable With
-- **Flutter & Dart**: Extensive production experience
-- **Firebase (Firestore, Storage, Auth)**: Used across multiple projects
-- **Clean Architecture in Flutter**: Familiar with the 3-layer separation (data → domain → presentation)
-- **flutter_bloc / Cubit**: My preferred state management approach
-- **TDD in Dart**: Standard practice in my workflow
+When I first received this assignment, I was genuinely excited. The brief — extending a clean architecture Flutter app with a Firebase-backed article creation feature — sits at the intersection of my two worlds: understanding what to build (product) and ensuring it's built right (engineering). I decided to approach it like a real product task, not a coding exercise.
 
-### What I Deepened My Understanding Of
-- **Symmetry's specific architecture rules**: The `ARCHITECTURE_VIOLATIONS.md` (50 rules) and `CODING_GUIDELINES.md` (6 rules) were more prescriptive than typical clean architecture guides. I spent time mapping each rule to the existing codebase to understand what was and wasn't compliant. This taught me that architecture docs are only useful when enforced — the existing code violated several of its own rules.
-- **Floor ORM**: The starter project uses Floor for local SQLite. While I didn't need to modify the Floor layer, understanding its generated code (`*.g.dart` files) was necessary to avoid breaking the build during refactoring.
-- **Dio 4.x specifics**: The project uses Dio 4 (with `DioError`), not Dio 5 (`DioException`). I had to be careful not to "upgrade" to Dio 5 APIs, which would cascade into dependency conflicts.
-- **Google Gemini API for structured output**: The `google_generative_ai` package sends prompts to Gemini and returns text. Getting reliable structured JSON output required careful prompt engineering — specifying exact fields, types, and constraints, then parsing with defensive fallbacks for every field.
+## 2. Process & Methodology
 
-### Resources Used
-- Symmetry's own docs (`APP_ARCHITECTURE.md`, `ARCHITECTURE_VIOLATIONS.md`, `CODING_GUIDELINES.md`) — these were the primary reference
-- Official Flutter documentation for `image_picker` integration
-- Firebase documentation for Firestore security rules field validation (the `hasAll()`, `is string`, `size()` patterns)
-- flutter_bloc documentation for Cubit patterns vs full Bloc patterns
+### Phase 1: Product Understanding
+
+Before writing a single line of code, I needed to understand what already existed. I mapped the current app's user flows using Mermaid.js diagrams — what screens existed, how users navigated between them, and where the experience had gaps. I read Symmetry's architecture docs (`APP_ARCHITECTURE.md`, `ARCHITECTURE_VIOLATIONS.md`, `CODING_GUIDELINES.md`) before reading the code itself. This gave me a checklist to evaluate the codebase against.
+
+### Phase 2: Market Research
+
+I then conducted a competitive analysis of 7 platforms (Medium, Substack, Ghost, WordPress, Flipboard, Google News, LinkedIn) to understand the landscape and identify where real user pain existed. The research revealed a critical market gap:
+
+**No major platform offers a good mobile article creation experience.**
+
+| Platform | Mobile Writing | Gap |
+|----------|---------------|-----|
+| Medium | Disabled entirely | Killed mobile editing in 2022 |
+| Ghost | No mobile app | Web-only editor |
+| Substack | Read-focused | Mobile app is for reading, not writing |
+| WordPress | Clunky | Block editor on mobile is over-engineered |
+| Flipboard | None | Curation only, no content creation |
+| Google News | None | Pure aggregation |
+
+From this research, I identified two distinct user types with different needs:
+
+**Readers** want to stay informed quickly (3-7 minute micro-sessions), save articles for later, and increasingly worry about the credibility of what they're reading (58% worry about fake news — Reuters DNR 2025).
+
+**Journalists/Creators** want to publish from their phone while the story is fresh, never lose a draft, and have a tool that doesn't fight their creative flow. The research showed they'll abandon a mobile creation tool after just 2 friction points.
+
+I documented all of this in `docs/USER_RESEARCH.md` — 7-platform competitive analysis, Jobs-To-Be-Done for both user types, 12 validated assumptions with sources, and 21 verified source URLs.
+
+### Phase 3: Pain Points Drove Feature Choices
+
+Every feature in this app traces back to a specific pain point discovered in research. Here are the key mappings:
+
+**"Every mobile editor is broken"** → Full mobile-native Create Article flow with a simple 4-field form (title, description, content, thumbnail). Research showed complex editors fail on mobile — WordPress's block editor is universally criticized. We kept it simple.
+
+**"Image handling is painful"** → Client-side image compression before upload, gallery + camera source selection, preview before publish, and stateful error recovery that preserves uploaded images on failure. Image handling was the #1 friction point across all benchmarked platforms.
+
+**"Fear of losing work"** → Local draft autosave (10-second debounce) with restore dialog on return and clear on successful publish. Medium's UX research found users saying: *"Without interaction with the article, I am afraid that I may lose the draft."*
+
+**"58% worry about fake news"** → AI-powered Perspective Context (tone analysis, political leaning, source background, emphasis analysis). Critically, I chose *not* to build a fact-checker — research showed Grok's fact-checking only agrees with human fact-checkers 54.5% of the time, and 42% of users trust stories *less* after seeing an AI disclosure. Instead, the feature helps readers think critically by providing context, not verdicts. This was a product decision, not an engineering one.
+
+**"Information overload, no way to prioritize"** → Category filters (7 categories), debounced search (500ms), and pagination/infinite scroll. These are standard news app patterns that the starter project lacked.
+
+**"Only 25% of users return after Day 1"** → Polish features that improve first impressions: shimmer loading, hero image animations, dark mode, splash screen, empty state messaging, and article sharing. Retention is a product problem, not a feature problem — it's the sum of small experiences.
+
+**"Mobile users lose connectivity"** → Offline support with connectivity detection and graceful fallback to locally cached articles.
+
+I built a 2-axis prioritization matrix (Impact vs Effort) and categorized every feature into four tiers:
+- **P0 — Do First**: Assignment requirements + quick wins (20 items)
+- **P1 — Do Next**: Core differentiators (16 items)
+- **P2 — Nice to Have**: Polish and attention to detail (15 items)
+- **P3 — Backlog**: Future v2 improvements (13 items)
+
+This prioritization matrix, along with the full PRD (mission, vision, target users, personas, success criteria, and feature specs), became the blueprint that the AI agents executed against. See `docs/PRD.md` for the complete document.
+
+### Phase 4: Foundation Before Features
+
+Before building anything new, I had the AI audit the starter code against Symmetry's own architecture rules. It found 10 bugs and violations hiding in plain sight:
+
+- `Equatable` props with force-unwrap (`!`) on nullable fields — runtime crashes waiting to happen
+- `DioError` leaking from the data layer into core and presentation — a direct violation of AV 1.2.4 and AV 2.1.1
+- An eager `ListView` rendering all items at once instead of `ListView.builder`
+- Missing `toEntity()` on `ArticleModel` — ad-hoc conversions throughout
+
+These were fixed systematically in a single commit, documented in `docs/REFACTOR_REPORT.md` with root cause analysis and architectural violation references for each. You don't build features on a cracked foundation — this is the same discipline I apply when managing engineering teams.
+
+### Phase 5: AI-Assisted Development Workflow
+
+This is where the process gets interesting. Here are the tools and agents I orchestrated:
+
+#### Tools
+
+| Tool | Role |
+|------|------|
+| **OpenCode (CLI)** | Primary development environment. All coding, refactoring, and testing. Claude Opus 4.6 as the model. Preferred CLI over IDE-based AI because it provides direct terminal access and multi-agent orchestration. |
+| **VSCode + GPT 5.4** | Real-time code review and validation. While OpenCode wrote code, I used VSCode with a separate AI model to read, verify, and fine-tune in parallel. Having two AI models cross-check each other catches errors neither would catch alone. |
+| **Stitch (Google)** | UI design tool. The UX designer agent created initial designs via MCP (Model Context Protocol), I made manual adjustments in Stitch to match my product vision, then the agent picked up those changes and implemented them in Flutter code. |
+| **Mermaid.js** | Before/after user flow diagrams for planning and documentation. |
+| **Android Emulator** | Real device testing throughout development — not just at the end. |
+
+#### Multi-Agent System
+
+OpenCode provides specialized AI agents, each with a defined role. I used them the same way I'd assign work to specialists on an engineering team:
+
+| Agent | Role | How I Used It |
+|-------|------|---------------|
+| **Product Architect** | Drafts PRDs, defines requirements | Created the initial PRD structure from my research findings |
+| **User Researcher** | Discovery, identifies unmet needs | Validated assumptions against published data sources |
+| **UX Designer** | Creates UI prototypes in Stitch | Generated initial screen designs via MCP, which I then refined manually |
+| **Tech Lead** | Reviews feasibility, identifies risks | Reviewed PRD for architectural feasibility before development started |
+| **Tech Warden** | Identifies edge cases, breaking changes | Ran compliance audits against Symmetry's 50 architecture rules |
+| **Eng Lead** | Creates technical architecture plans | Planned the clean architecture layer structure for each new feature |
+| **Code Constructor** | Converts specs into production code | Implemented features from tech specs and Stitch designs |
+| **Explore Agent** | Fast codebase navigation | Searched and analyzed the codebase to answer specific questions |
+
+#### Human-in-the-Loop
+
+The AI didn't run autonomously. My role throughout:
+
+- **All product decisions were mine**: what to build, what to defer, how to frame the AI feature, which pain points to prioritize
+- **UI refinement**: after the UX agent created initial designs in Stitch, I went into Stitch manually and adjusted layouts, spacing, and visual hierarchy to match my vision — then the agent picked up those changes and implemented them
+- **Code review**: I reviewed code in VSCode as OpenCode wrote it, using GPT 5.4 as a second pair of eyes
+- **Testing validation**: I tested on the Android simulator myself, identified issues, and directed fixes
+- **Architecture enforcement**: when the AI drifted from Symmetry's architecture rules (which happened), I caught it and redirected
+
+### Phase 6: Testing Discipline
+
+Testing wasn't an afterthought — it was part of the workflow from the start:
+
+- Tests were written alongside features (and often before implementation for domain/data layers)
+- Every commit includes the test count in the commit message (e.g., `242/242 tests, 0 analyze issues`)
+- `flutter analyze` was run on every commit — 0 errors, 0 warnings throughout
+- Real device testing on Android emulator (API 30) for every user-facing change
+- The final suite: **242 unit tests across 36 test files, all passing**
 
 ## 3. Challenges Faced
 
-### Challenge 1: Existing Code Quality Issues
-**What I found**: The starter code had several critical bugs and architecture violations hiding in plain sight:
-- `Equatable` props lists with force-unwrap (`!`) on nullable fields — these would crash at runtime if any field was null
-- `DioError` leaking from the data layer into `core/data_state.dart` and `presentation/remote_article_state.dart` — a direct violation of Symmetry's own Architecture Violations doc (AV 1.2.4, AV 2.1.1)
-- Deprecated Dio 4.x APIs (`DioErrorType.response`)
-- An eager `ListView` rendering all items at once instead of `ListView.builder`
-- Missing `toEntity()` method on `ArticleModel`, meaning the model-to-entity conversion was done ad-hoc
+### Challenge 1: AI Hallucinated APIs That Don't Exist
 
-**How I solved it**: I created a `docs/REFACTOR_REPORT.md` documenting all 10 issues with their root cause, architectural violation reference, and fix. Then I fixed them systematically in a single commit (`935548d`), introducing a new `AppException` class as a pure-Dart domain exception that replaces framework-specific errors at the repository boundary.
+**What happened**: The AI confidently used `DioException` (a Dio 5 API) when the project uses Dio 4 (which only has `DioError`). It also tried `Color.withValues()` and `ColorScheme.surfaceContainer` — properties that don't exist in Flutter 3.19.1. These weren't syntax errors; they were plausible-looking code that would compile differently or fail at runtime.
 
-**Lesson**: Reading the architecture docs *before* reading the code is essential. It gave me a checklist to evaluate the codebase against, and the violations jumped out immediately.
+**How I caught it**: Cross-referencing in VSCode with GPT 5.4, and running the build after every change. The AI doesn't check version constraints — the human must.
 
-### Challenge 2: Firebase Configuration Without iOS
-**What I found**: The project only has an `android/` directory — no iOS project. The FlutterFire CLI tried to configure both platforms.
+**Lesson**: AI is confident, not correct. Version-specific API knowledge requires human verification. This is analogous to a junior developer who knows the *concept* but not the *version* — you review their code before it ships.
 
-**How I solved it**: Configured FlutterFire for Android only, generated the `google-services.json` and `firebase_options.dart` appropriately. Documented this limitation.
+### Challenge 2: Foundation Before Features (Resisting the Urge to Build)
 
-**Lesson**: Always check what platforms a Flutter project actually targets before running cross-platform tooling.
+**What happened**: The starter code had crash-causing bugs. The natural temptation was to start building the new feature immediately. Instead, I spent time auditing and fixing 10 existing issues first.
 
-### Challenge 3: Storage Bucket Requires Billing
-**What I found**: Firebase Storage requires the Blaze (pay-as-you-go) billing plan to create a storage bucket. The free Spark plan doesn't support it.
+**Why it mattered**: This is product discipline. In my experience managing teams, the projects that fail are the ones that add features on top of broken infrastructure. Symmetry's own coding guidelines include the Boy Scout Rule — "leave the code better than you found it." Following their own rules was the right call.
 
-**How I solved it**: I wrote the storage security rules (`backend/storage.rules`) and the `StorageArticleDataSourceImpl` implementation while the billing plan was being set up. Once Blaze billing was enabled, I deployed the storage rules successfully. The rules enforce image-only content types, 5MB maximum file size, and restrict uploads to the `media/articles/` path.
+### Challenge 3: Framing the AI Feature — A Product Decision, Not an Engineering One
 
-**Lesson**: Infrastructure dependencies should be documented as prerequisites, not discovered at deploy time. Writing the code and rules ahead of deployment meant the deploy was a single command once billing was ready.
+**What I considered**: Adding AI to a news app is risky. The obvious approach is fact-checking, but the research said otherwise:
+- Grok's inline fact-checking agrees with human fact-checkers only 54.5% of the time
+- 42% of users trust stories *less* after seeing an AI disclosure (transparency paradox)
+- Binary fact-checking makes the app a "truth arbiter" — a role no LLM is reliable enough to fill
 
-### Challenge 4: Choosing Cubit vs Bloc for the New Feature
-**What I considered**: The existing `daily_news` feature uses full `Bloc` with events and states. Should the new `create_article` feature follow the same pattern?
+**Decision**: I framed the feature as "Perspective Context" — tone analysis, source background, emphasis analysis, political leaning — not true/false verdicts. This aligns with what Reuters DNR 2025 respondents actually asked for: *"Say where the information is from and the political view of the author."*
 
-**Decision**: I chose `Cubit` instead. The article creation flow is form-driven — users fill fields and tap buttons, triggering direct method calls (`uploadImage()`, `submitArticle()`, `reset()`). This is fundamentally different from the news feed, which responds to discrete events (`GetArticles`). Using events here would add boilerplate without architectural benefit. Both `Cubit` and `Bloc` come from `flutter_bloc`, so there's no dependency difference.
+**Lesson**: This decision required product judgment, not engineering skill. The AI could have built either version. Knowing *which* version to build — that's the product manager's job.
 
-**Lesson**: Consistency is important, but consistency for its own sake can be harmful. The right abstraction for the job matters more than rigid uniformity.
+### Challenge 4: Managing AI Context and Planning
 
-### Challenge 5: TDD with Firebase Dependencies
-**What I found**: Testing code that depends on Firebase (`FirebaseFirestore`, `FirebaseStorage`) requires careful mocking. You can't just instantiate these in tests.
+**What happened**: AI agents lose context in long sessions. Without clear structure, they forget earlier decisions, repeat work, or drift from architectural rules.
 
-**How I solved it**: The clean architecture made this straightforward — since data sources are behind abstract interfaces (`FirestoreArticleDataSource`, `StorageArticleDataSource`), the repository and use case tests only depend on mock interfaces, not on Firebase at all. The Cubit tests mock the use cases. Zero Firebase dependency in any test.
+**How I solved it**: Meticulous planning. The PRD, feature tracking matrix (133 items), compliance audit document, and architecture decision records served as persistent context that the AI could reference. Todo lists tracked every task in real-time. This is the same skill I use managing engineering teams — clear requirements, clear acceptance criteria, written not verbal.
 
-**Lesson**: Clean architecture pays dividends at test time. If your tests need to mock framework internals, your abstractions are leaking.
+### Challenge 5: Firebase Infrastructure Dependencies
 
-### Challenge 6: AI Feature — Choosing the Right Framing
-**What I considered**: Adding AI to a news app is risky territory. Research showed that Grok's inline fact-checking only agrees with human fact-checkers 54.5% of the time, and 42% of users trust stories *less* after seeing an AI disclosure (transparency paradox). Binary fact-checking would make the app a "truth arbiter" — a role no LLM is reliable enough to fill.
+**What happened**: Firebase Storage requires the Blaze (pay-as-you-go) billing plan. The free Spark plan doesn't support it.
 
-**Decision**: I framed the feature as "Perspective Context" — tone analysis, source background, emphasis analysis — not binary fact-checking. This aligns with what Reuters DNR 2025 respondents actually asked for: *"Say where the information is from and the political view of the author."* The feature helps readers think critically rather than outsourcing judgment to an AI.
+**How I solved it**: I had the AI write all the code and security rules before the billing plan was active. When it was ready, deployment was a single command. Infrastructure dependencies should be documented as prerequisites, not discovered at deploy time.
 
-**Technical choices**: Gemini 2.0 Flash (free tier, 15 RPM) with Firestore caching to stay within limits. Lazy-loaded (user taps button) to respect user agency. Structured JSON prompt with defensive parsing for every field.
+## 4. Reflection: Growth as an AI Product Builder
 
-**Lesson**: The hardest part of adding AI features isn't the API call — it's the product framing. Getting the framing wrong turns a useful feature into a liability.
+### What This Process Proved
 
-## 4. Reflection and Future Directions
+A product manager who understands engineering logic can orchestrate AI to ship production-quality software — 60+ files, 242 tests, clean architecture, Firebase backend, three external API integrations — with the same rigor as a traditional engineering team.
 
-### What I Learned
-**Technically**: This project reinforced that architecture violations compound. Each leak of `DioError` into the presentation layer was small, but collectively they made the codebase fragile and hard to test. Fixing them at the boundary (repository layer) was a one-time cost that unlocked testability across the entire stack.
+But this isn't about replacing engineers. It's about a new role emerging: the **AI Product Builder** — someone who combines product thinking (what to build), engineering literacy (how it should be built), and AI orchestration (directing AI to build it). This assignment let me exercise all three.
 
-**Professionally**: Writing a research doc (`USER_RESEARCH.md`) before writing code changed my approach. When I could point to specific data — Medium killed mobile editing in 2022, Ghost has no mobile app, WordPress mobile editing has a 2.3/5 satisfaction rating — it transformed "I think we should do X" into "The data shows users need X." This is the difference between a developer and a product engineer.
+### Where AI Excelled
 
-### Future Improvements
+- **Repetitive architecture patterns**: Once the AI understood the clean architecture pattern (entity → params → use case → repository → data source), it could replicate it across features with high consistency.
+- **Test generation**: Given a well-defined interface, the AI generated comprehensive test suites — including edge cases I might not have thought of (null params, empty lists, error recovery).
+- **Compliance auditing**: The Tech Warden agent could systematically check 50 architecture rules across the entire codebase faster than any human.
+- **Boilerplate reduction**: DI registration, model serialization, state classes — the AI handled these without complaint.
 
-1. **Rich Text Content Editor**: The current content field is plain text. A production solution would integrate `flutter_quill` with support for formatting, inline images, and markdown export.
+### Where Human Judgment Was Essential
 
-2. **Article Feed Integration**: After creating an article, it should appear in the main news feed alongside API articles. This would require a composite data source that merges Firestore articles with NewsAPI articles, sorted by date.
+- **Product framing**: The AI insight feature could have been a fact-checker or a perspective tool. The AI would have built either. Choosing the right framing based on research — that was mine.
+- **Research interpretation**: The AI can find data; it can't weigh competing evidence and make a judgment call about what matters for *this* product.
+- **UI taste**: The AI's initial designs were functional but generic. Manual refinement in Stitch — adjusting spacing, hierarchy, visual weight — made them feel intentional.
+- **Prioritization**: With 64+ potential features, deciding what to build and what to defer required understanding the assignment's goals, the user's needs, and the time available. That's product management.
+- **Version constraint awareness**: The AI doesn't know what Flutter version is installed. It guesses based on training data. The human catches the errors.
 
-3. **Multi-Image Gallery**: Support uploading multiple images per article, with a carousel or gallery viewer in the detail view.
+### Honest Limitations
 
-4. **Push Notifications (FCM)**: Firebase Cloud Messaging to notify users of new articles from authors they follow.
+I believe in transparency, so here's what didn't work perfectly:
 
-5. **Accessibility Audit**: Add semantic labels, ensure adequate contrast ratios, test with screen readers. The current UI uses hardcoded colors that may not meet WCAG AA contrast requirements.
+- **API version hallucinations were constant**: The AI used Dio 5 APIs, Flutter 3.22+ properties, and deprecated patterns interchangeably. Every code change needed human verification against the actual project dependencies. This was the single biggest source of friction.
+- **Long sessions degraded quality**: After extended development sessions, the AI would start losing context on earlier decisions. Breaking work into focused sessions with clear handoff notes (written context summaries) was essential.
+- **AI design taste is "acceptable" not "great"**: Generated UIs needed manual refinement in Stitch. The AI gets layout right but misses the subtle things — visual rhythm, whitespace balance, information hierarchy — that make a design feel polished.
+- **Architecture drift**: Without explicit constraints, the AI would take shortcuts (putting Firebase imports in domain layer models, skipping abstract interfaces). Constant vigilance and the compliance audit caught these, but it required active management — just like managing any engineering team.
+- **Not pure TDD**: In practice, the workflow was more "test-alongside" than strict test-first for every single function. Domain and data layer tests were often written first; presentation tests came after implementation. Being honest about this matters more than claiming perfection.
 
-6. **Integration Tests**: Add end-to-end tests using `integration_test` package that exercise the full flow from form entry to Firestore write.
+### Future Directions
 
-7. **CI/CD Pipeline**: GitHub Actions workflow running `flutter analyze`, `flutter test`, and `flutter build apk` on every push to `main`.
+1. **Rich Text Editor**: Replace plain text content with `flutter_quill` for formatted article creation
+2. **Article Feed Integration**: Merge Firestore articles into the main news feed alongside NewsAPI articles
+3. **CI/CD Pipeline**: GitHub Actions for automated `flutter analyze`, `flutter test`, and `flutter build apk` on every push
+4. **Integration Tests**: End-to-end tests using `integration_test` for the full create-to-Firestore flow
+5. **AI Insight Improvements**: User feedback mechanism (thumbs up/down), accuracy tracking over time, A/B test different prompt strategies
+6. **Push Notifications**: FCM for new articles from followed authors
 
 ## 5. Proof of the Project
+
+### Development Workflow Screenshots
+
+These images show the actual development process — not just the final product:
+
+| What | Screenshot |
+|------|-----------|
+| **Final App** — Dark mode, category filters, bottom navigation, live on Android emulator | ![App Dark Mode](../screenshots/09_app_dark_mode.png) |
+| **OpenCode (CLI)** — Primary development environment. Claude Opus 4.6 making code edits with todo tracking visible on the right panel. | ![OpenCode CLI](../screenshots/10_opencode_cli.png) |
+| **VSCode + Claude Code** — Code review and compliance auditing. Firestore security rules visible alongside the audit scorecard (49 PASS / 7 FLAG / 0 FAIL). | ![VSCode Review](../screenshots/11_vscode_review.png) |
 
 ### App Screenshots
 
@@ -181,185 +296,103 @@ create_article/                   ai_insight/
 
 ## 6. Overdelivery
 
-### 1. New Features Implemented
+Beyond the assignment requirements, I prioritized features based on the research findings. Here's what was built, organized by the product outcome each group serves:
 
-#### a. Full Codebase Refactoring (Existing Code)
-**Functionality**: Fixed 10 bugs and architecture violations in the original starter code before adding any new features.
-**Purpose**: A professional developer doesn't just add features on top of broken code. The Boy Scout Rule ("leave the code better than you found it") is in Symmetry's own coding guidelines.
-**Details**: See `docs/REFACTOR_REPORT.md` for the full list with root cause analysis and architectural violation references.
+### 1. Content Creation & Management
 
-#### b. Product Research Document
-**Functionality**: Created `docs/USER_RESEARCH.md` with competitive analysis of 7 platforms (Medium, Substack, Ghost, WordPress, Notion, Bear, Ulysses), Jobs-To-Be-Done analysis, 12 validated assumptions with sources, and a priority matrix.
-**Purpose**: Demonstrates that feature decisions should be driven by user needs and market gaps, not assumptions.
-**Details**: 21 verified source URLs with dates and reliability ratings.
+*Pain point: Every major platform's mobile editor is broken or absent. Medium killed mobile editing in 2022. WordPress mobile is clunky. Ghost has no mobile app.*
 
-#### c. Comprehensive Firestore Security Rules
-**Functionality**: Server-side schema validation in `backend/firestore.rules` — field presence checks, type validation, string length constraints (matching the DB schema), server timestamp enforcement, `ownerUid`-based ownership (`request.auth.uid`) on create/update, immutability for `ownerUid` and `createdAt`, and `category` validation.
-**Purpose**: Client-side validation is a UX convenience; server-side validation is security. Both are required.
+- **Full Create Article Flow**: Mobile-native 4-field form (title, description, content, thumbnail) with Firebase backend. Simple by design — research showed complex mobile editors fail.
+- **Article Editing**: Full edit flow with pre-filled fields, owner-based authorization (`ownerUid == request.auth.uid`), immutable `ownerUid` and `createdAt` in Firestore rules.
+- **Local Draft Autosave**: 10-second debounce autosave to SharedPreferences, restore dialog on return, clear on publish. Directly addresses the "fear of losing work" pain point.
+- **Article Categories**: Optional category field (dropdown on create) flowing through the full stack to Firestore.
+- **Image Source Selection**: Bottom sheet for gallery + camera. Reporters in the field need camera access.
+- **Stateful Error Recovery**: Failed submission preserves uploaded image URL — users retry without re-uploading.
 
-#### d. Image Source Selection (Gallery + Camera)
-**Functionality**: Bottom sheet dialog letting users choose between gallery and camera when adding a thumbnail.
-**Purpose**: Mobile article creation is often "in the field" — reporters need camera access, not just gallery.
+### 2. Discovery & Navigation
 
-#### e. Stateful Error Recovery
-**Functionality**: When article submission fails after image upload, the error state preserves the uploaded image URL. The user can fix their form and retry without re-uploading the image.
-**Purpose**: Losing an uploaded image to a transient network error is unacceptable UX.
+*Pain point: Information overload with no way to prioritize. The starter app had a single unfiltered list.*
 
-#### f. API Key Security Hardening
-**Functionality**: Moved the NewsAPI key from a hardcoded constant to `--dart-define` build-time injection via `String.fromEnvironment('NEWS_API_KEY')`. Created `.env.example` with setup instructions. The `.gitignore` already excludes `.env` files.
-**Purpose**: Hardcoded API keys in source control are a security vulnerability. Build-time injection keeps secrets out of the repository while remaining easy to configure.
+- **Category Filters**: 7-category horizontal scroll bar (general, business, entertainment, health, science, sports, technology) flowing through the full stack to the NewsAPI.
+- **Search**: Debounced 500ms search bar with clear button. Fundamental news discovery mechanism.
+- **Pagination / Infinite Scroll**: Page/pageSize params through entire stack. Triggers at 300px from bottom. Prevents loading 100+ articles at once.
+- **Bottom Navigation**: 4-tab bar (Home, Saved, Create, Profile) with `IndexedStack` for state preservation. Standard mobile navigation pattern.
+- **Pull-to-Refresh**: `RefreshIndicator` on home page. Baseline mobile UX.
 
-#### g. Local BLoC Error Handling
-**Functionality**: Added `LocalArticlesError` state to the local article BLoC, wrapped all event handlers in try/catch, and updated the Saved Articles page to display an error state with a retry button.
-**Purpose**: The original code had no error handling for local database operations — any Floor exception would crash silently. Users now see a clear error message and can retry.
+### 3. Trust & Transparency
 
-#### h. Comprehensive Widget Tests
-**Functionality**: 23 widget tests covering all 3 reusable presentation widgets (including readOnly mode tests for ArticleTextField).
-**Purpose**: Widget tests verify that the UI layer renders correctly and responds to user interaction.
+*Pain point: 58% of users worry about fake news (Reuters DNR 2025). No competitor offers per-article perspective/tone analysis.*
 
-#### i. Null Safety Hardening Across Existing UI
-**Functionality**: Replaced all force-unwrap (`!`) operators on nullable fields across `article_tile.dart`, `article_detail.dart`, and `daily_news.dart` with null-safe alternatives.
-**Purpose**: Every `!` on a nullable `ArticleEntity` field was a latent crash.
+- **AI Insight — Perspective Context**: Gemini-powered analysis providing tone classification, political leaning badge, emphasis analysis, source context, and summary bullets. Full clean architecture: entity, params, model, data sources (Gemini + Firestore cache), repository, use case, cubit, and presentation panel. 53 tests across all layers.
+- **Research-Backed Framing**: Deliberately *not* fact-checking. Framed as perspective context based on Grok's 54.5% accuracy rate and the transparency paradox (42% trust less after AI disclosure).
+- **Lazy Loading**: User taps button to request insight — respects user agency, avoids unnecessary API calls.
+- **AI Disclaimer**: "AI-generated, verify independently" — 94% of users want AI use disclosed (Trusting News, n=6,000+).
+- **Firestore Caching**: Same article produces same insight. Avoids redundant Gemini API calls, stays within free tier (15 RPM).
 
-#### j. Pull-to-Refresh on Home Page
-**Functionality**: Wrapped `ListView.builder` in a `RefreshIndicator`.
-**Purpose**: Pull-to-refresh is a baseline mobile UX pattern.
+### 4. User Experience Polish
 
-#### k. Error Retry via Tap on Home Page
-**Functionality**: Made the error state in the home page tappable with "Tap to retry" text.
-**Purpose**: A dead-end error screen forces the user to kill and relaunch the app.
+*Pain point: Only 25% of users return after Day 1. Retention is the sum of small experiences.*
 
-#### l. Use Case Null Safety Guards
-**Functionality**: Replaced `params!` force-unwrap with explicit `ArgumentError.notNull('params')` guards.
-**Purpose**: Explicit null guards provide a clear error message instead of a generic null-check exception.
+- **Shimmer Loading**: Skeleton cards during load instead of a spinner. Communicates structure and reduces perceived wait time.
+- **Hero Image Animation**: Shared-element transition between list and detail view. Spatial continuity helps users understand navigation.
+- **Dark Mode**: System/manual toggle persisted to SharedPreferences. 68% of users prefer dark mode. Accessible from Profile screen.
+- **Splash Screen**: Fade-in + scale animation during Firebase initialization. Brand presence and loading indicator.
+- **Empty States**: Configurable widget with icon, title, and subtitle. Empty lists explain themselves instead of showing blank space.
+- **Article Sharing**: Share button using `share_plus`. Content sharing is a core news app feature.
 
-#### m. Removed Unused `intl` Dependency
-**Functionality**: Removed the `intl` package from `pubspec.yaml`.
-**Purpose**: Dead dependencies increase install size and create potential version conflicts.
+### 5. Reliability & Security
 
-#### n. Firebase Emulator Documentation
-**Functionality**: Created `backend/docs/EMULATOR_SETUP.md` with full Firebase Emulator Suite configuration.
-**Purpose**: Other developers should be able to run the Firebase backend locally.
+*Pain point: Mobile users lose connectivity. Security is non-negotiable for user-generated content.*
 
-#### o. Architecture Cleanup
-**Functionality**: Renamed `pages/` to `screens/` per architecture doc, created `shared/widgets/` folder with reusable `ErrorRetryWidget`, `EmptyStateWidget`, `ArticleShimmerList`, `CategoryChipBar`.
-**Purpose**: Align with Symmetry's architecture specification.
+- **User Authentication**: Full clean architecture implementation — `UserEntity`, `SignInParams`/`SignUpParams`, 4 use cases, `AuthCubit` with 5 states, Login/SignUp/Profile screens, `AuthGate` widget. 52 tests across all layers.
+- **Firestore Security Rules**: Server-side schema validation — field presence, type checks, string length constraints, server timestamp enforcement, `ownerUid` ownership on create/update, field immutability for `ownerUid` and `createdAt`, category validation.
+- **Offline Support**: `ConnectivityService` checks before API calls, falls back to Floor DB cached articles when offline.
+- **API Key Security**: NewsAPI and Gemini keys moved from hardcoded constants to `--dart-define` build-time injection.
+- **Null Safety Hardening**: Replaced all force-unwrap (`!`) operators on nullable fields across the existing UI with safe alternatives.
+- **Error Handling**: `LocalArticlesError` state with retry, `ErrorRetryWidget`, explicit null guards on use case params.
 
-#### p. Shimmer Loading (U-002)
-**Functionality**: Replaced `CupertinoActivityIndicator` with an `ArticleShimmerList` widget that shows animated skeleton cards while loading.
-**Purpose**: Shimmer loading communicates structure to the user while content loads, reducing perceived wait time.
+### 6. Code Quality & Architecture
 
-#### q. Category Filters (U-003)
-**Functionality**: Horizontal scrollable `CategoryChipBar` with 7 categories (general, business, entertainment, health, science, sports, technology). Category parameter flows through full stack (BLoC event -> use case params -> repository -> API service -> .g.dart).
-**Purpose**: Users need to filter news by topic. Category filters are a core news app pattern.
+*Symmetry's own guidelines: Boy Scout Rule, clean architecture, TDD, small functions, meaningful names.*
 
-#### r. Search Functionality (U-004)
-**Functionality**: Debounced search bar (500ms) in AppBar with clear button. When active, replaces category + country params with search query (NewsAPI constraint).
-**Purpose**: Search is a fundamental news discovery mechanism.
+- **10-Bug Refactor**: Fixed crashes, architecture violations, and deprecated APIs in the starter code before adding features. Documented in `docs/REFACTOR_REPORT.md` with root cause analysis.
+- **242 Tests**: Unit tests across all layers — domain entities, params, use cases, data models, repositories, cubits/blocs, and presentation widgets.
+- **0 Analyze Issues**: `flutter analyze` clean on every commit (1 info in generated `.g.dart` — not actionable).
+- **Architecture Compliance**: Renamed `pages/` to `screens/` per spec, extracted shared widgets, removed dead dependencies, enforced layer boundaries.
+- **8 Documentation Pages**: `ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`.
+- **Feature Tracking**: 129 of 133 items complete (97%), 4 deferred (low priority / out of scope).
 
-#### s. Hero Image Animation (U-005)
-**Functionality**: `Hero` widget wrapping article images in both the list tile and detail view for smooth shared-element transition.
-**Purpose**: Spatial continuity helps users understand where content comes from.
+### 2. Prototypes & Documentation Created
 
-#### t. Empty State Widget (U-006)
-**Functionality**: `EmptyStateWidget` with configurable icon, title, and subtitle. Used in Saved Articles and My Articles screens.
-**Purpose**: Empty lists should explain themselves, not just be blank.
-
-#### u. Dark Mode Support (U-007)
-**Functionality**: `ThemeCubit` with `ThemeMode.light`, `ThemeMode.dark`, `ThemeMode.system` options, persisted to SharedPreferences. Theme picker accessible from Profile screen.
-**Purpose**: Dark mode is an accessibility feature and user preference standard.
-
-#### v. Bottom Navigation (U-008)
-**Functionality**: `MainNavigation` with 4-tab `BottomNavigationBar` (Home, Saved, Create, Profile) using `IndexedStack` for state preservation across tabs.
-**Purpose**: Bottom navigation is the standard mobile pattern for primary destinations.
-
-#### w. Splash Screen (U-009)
-**Functionality**: `SplashScreen` with fade-in + scale animation, transitions to `MainNavigation` after 2 seconds.
-**Purpose**: Brand presence and loading indicator during Firebase initialization.
-
-#### x. Article Sharing (O-007)
-**Functionality**: Share button in article detail AppBar using `share_plus`. Shares article title + URL.
-**Purpose**: Content sharing is a core news app feature.
-
-#### y. Pagination / Infinite Scroll (O-010)
-**Functionality**: `page`/`pageSize` params through entire stack. `NotificationListener<ScrollNotification>` triggers `LoadMoreArticles` event at 300px from bottom. `RemoteArticlesDone` state tracks `currentPage`, `hasReachedMax`, `isLoadingMore` with `copyWith`.
-**Purpose**: Loading 100+ articles at once wastes bandwidth and memory.
-
-#### z. Offline Support (O-009)
-**Functionality**: `ConnectivityService` wrapping `connectivity_plus`. `ArticleRepositoryImpl` checks connectivity before API calls, falls back to locally saved articles from Floor DB when offline.
-**Purpose**: Mobile users frequently lose connectivity. The app should degrade gracefully.
-
-#### aa. Article Drafts (O-005)
-**Functionality**: `DraftService` using SharedPreferences for JSON-encoded draft state. `CreateArticlePage` auto-saves every 10 seconds, saves on dispose, offers "Restore Draft?" dialog on return, clears draft on successful publish.
-**Purpose**: Losing work to an app switch, call, or crash is unacceptable UX — especially for writers.
-
-#### bb. Article Categories on Create (O-003)
-**Functionality**: Optional `category` field on `FirebaseArticleEntity`, `FirebaseArticleModel` (with Firestore serialization), `CreateArticleParams`. `DropdownButtonFormField` in `CreateArticlePage`.
-**Purpose**: Categorization enables filtering and organization of user-created content.
-
-#### cc. User Authentication (O-001)
-**Functionality**: Full clean architecture implementation:
-- **Domain**: `UserEntity`, `SignInParams`, `SignUpParams`, `AuthRepository` (abstract), 4 use cases
-- **Data**: `UserModel`, `FirebaseAuthDataSource` (abstract + impl), `AuthRepositoryImpl` with user-friendly Firebase error mapping
-- **Presentation**: `AuthCubit` + 5 states, `LoginScreen`, `SignUpScreen`, `ProfileScreen` (avatar, theme picker, sign-out), `AuthTextField`
-- **Integration**: `_AuthGate` widget in `main.dart` using `BlocBuilder<AuthCubit, AuthState>` — shows login when unauthenticated, main app when authenticated
-- **Tests**: 32 tests across all layers
-
-**Purpose**: Authentication is the foundation for content ownership, article editing, and security.
-
-#### dd. Article Editing (O-002)
-**Functionality**: Full edit flow:
-- **Data Source**: `updateArticle()` and `getArticlesByOwner()` on Firestore data source
-- **Use Cases**: `UpdateArticleUseCase` and `GetArticlesByAuthorUseCase` (class name retained; now queries Firestore by `ownerUid` instead of author name)
-- **Cubit**: `updateArticle()` method on `CreateArticleCubit`, `MyArticlesCubit` for fetching owner's articles by `ownerUid`
-- **UI**: `CreateArticlePage` in edit mode (pre-filled fields, "Edit Article" title, calls `updateArticle` on submit), `MyArticlesScreen` with article list + edit buttons, "My Articles" tile in Profile screen
-- **Routes**: `/EditArticle` and `/MyArticles`
-- **Firestore Rules**: Owner-based auth — only the article creator (`ownerUid == request.auth.uid`) can update; `ownerUid` and `createdAt` are immutable
-- **Tests**: 18 tests (4 update use case, 5 getByOwner use case, 3 updateArticle cubit, 6 MyArticlesCubit)
-
-**Purpose**: Creating content without the ability to correct it is incomplete. Edit support closes the content lifecycle loop.
-
-#### ee. AI Insight — Perspective Context (O-017)
-**Functionality**: Gemini-powered article analysis available in the article detail view. Full clean architecture implementation:
-- **Domain**: `AiInsightEntity` (6 fields including `politicalLeaning`), `GetInsightParams` (with URL-hash cache key), `AiInsightRepository` (abstract), `GetArticleInsightUseCase`
-- **Data**: `AiInsightModel extends AiInsightEntity` (fromJson/toJson/toEntity/fromEntity), `GeminiDataSource` + `InsightCacheDataSource` (abstract interfaces), `GeminiDataSourceImpl` (structured prompt requesting summary, tone, political leaning, source context, emphasis analysis + JSON parsing), `FirestoreInsightCacheImpl` (cache in `ai_insights` collection), `AiInsightRepositoryImpl` (cache-first: Firestore → Gemini → cache → return)
-- **Presentation**: `AiInsightCubit` + 4 states (Initial/Loading/Loaded/Error), `AiInsightPanel` (collapsible card with tone badge, political leaning badge, summary bullets, "Read original article" link, expandable sections, AI disclaimer)
-- **Integration**: `MultiBlocProvider` in article detail, DI registrations in `injection_container.dart`
-- **Tests**: 53 tests across entity (5), params (10), model (14), use case (4), repository (10), cubit (12)
-
-**Purpose**: Addresses the trust crisis in news (58% worry about fake news — Reuters DNR 2025). Turns NewsAPI's content truncation limitation into a feature. Framed as "Perspective Context" (not fact-checking) to avoid truth-arbiter backlash based on Grok/X research showing 54.5% agreement rate with human fact-checkers. Political leaning analysis per-article satisfies a specific user demand: *"Say where the information is from and the political view of the author"* (Female, 21, UK — Reuters DNR 2025).
-
-**Research-backed design decisions**:
-- Lazy-loaded (user taps button) — respects user agency
-- "AI-generated, verify independently" disclaimer — 94% want AI use disclosed (Trusting News, n=6,000+)
-- Tone/emphasis analysis over true/false — avoids the transparency paradox (42% trust less after AI disclosure)
-- Firestore caching — stays within Gemini free tier (15 RPM)
-
-### 2. Prototypes Created
-
-#### a. DB Schema Documentation
-**Location**: `backend/docs/DB_SCHEMA.md`
-**Purpose**: A formal schema document that serves as the single source of truth for the Firestore `articles` collection structure, field types, constraints, and validation rules.
-
-#### b. Feature Tracking Matrix
-**Location**: `docs/FEATURE_TRACKING.md`
-**Purpose**: 87 tracked items across 6 categories (Firebase backend, domain layer, data layer, presentation layer, integration, polish). Provides visibility into what was planned, started, completed, or deferred.
-
-#### c. Assignment Requirements Analysis
-**Location**: `docs/ASSIGNMENT_REQUIREMENTS.md`
-**Purpose**: Decomposes the assignment brief into explicit, testable requirements so nothing is missed.
+- **Product Research Document** (`docs/USER_RESEARCH.md`): 7-platform competitive analysis, JTBD for both user types, 12 validated assumptions, 21 verified source URLs with dates and reliability ratings.
+- **Product Requirements Document** (`docs/PRD.md`): Mission, vision, target users, personas, feature specs, prioritization matrix, success criteria, architecture decisions.
+- **DB Schema Documentation** (`backend/docs/DB_SCHEMA.md`): Single source of truth for Firestore collection structure, field types, constraints, and validation rules.
+- **Feature Tracking Matrix** (`docs/FEATURE_TRACKING.md`): 133 tracked items across 6 categories with status tracking.
+- **Compliance Audit** (`docs/COMPLIANCE_AUDIT.md`): Systematic audit against Symmetry's 50 architecture rules and 6 coding guidelines.
+- **Assignment Requirements Analysis** (`docs/ASSIGNMENT_REQUIREMENTS.md`): Decomposed the brief into explicit, testable requirements.
 
 ### 3. How Can You Improve This
 
-- **Widget Tests for CreateArticlePage**: The individual widgets have full test coverage. Adding integration-level widget tests for the parent `CreateArticlePage` would require mocking `BlocProvider` and verifying the form integration end-to-end.
-- **Integration Tests**: Add end-to-end tests using `integration_test` package that exercise the full flow from form entry to Firestore write.
-- **CI/CD Pipeline**: Set up GitHub Actions to run `flutter analyze`, `flutter test`, and `flutter build apk` on every push.
-- **Firestore Emulator Tests**: Use the Firebase Emulator Suite to test Firestore security rules and data source implementations against a local emulator instead of production.
-- **Rich Text Editor**: Replace the plain text content field with `flutter_quill` for formatted content creation.
-- **Article Feed Integration**: Merge Firestore-created articles into the main news feed alongside NewsAPI articles.
-- **AI Insight Improvements**: Add user feedback mechanism (thumbs up/down on insights), track accuracy over time, A/B test different prompt strategies, support multiple AI models for comparison.
+- **Integration Tests**: End-to-end tests using `integration_test` package exercising the full create-to-Firestore flow
+- **CI/CD Pipeline**: GitHub Actions for automated testing and builds on every push
+- **Firestore Emulator Tests**: Test security rules against a local emulator instead of production
+- **Rich Text Editor**: Replace plain text with `flutter_quill` for formatted content
+- **Article Feed Integration**: Merge Firestore articles into the main news feed alongside NewsAPI articles
+- **AI Feedback Loop**: Thumbs up/down on insights to track accuracy over time
+- **Accessibility Audit**: Semantic labels, contrast ratios, screen reader testing
 
 ## 7. Extra Sections
+
+### Tools & Workflow Summary
+
+| Tool | Purpose | Usage |
+|------|---------|-------|
+| OpenCode (CLI) | Primary development | All coding, refactoring, testing. Claude Opus 4.6. |
+| VSCode + GPT 5.4 | Code review / validation | Real-time cross-checking while OpenCode developed |
+| Stitch (Google) | UI design | UX agent creates via MCP → manual refinement → agent implements |
+| Mermaid.js | User flow diagrams | Before/after mapping of app navigation |
+| Android Emulator | Device testing | Continuous testing on API 30 emulator |
+| Firebase CLI | Backend deployment | Firestore rules, indexes, storage rules |
 
 ### Commit History
 | Commit | Description |
@@ -384,6 +417,9 @@ create_article/                   ai_insight/
 | `56f7c6f` | fix: make author field read-only to prevent impersonation (185/185 tests) |
 | `f58166f` | fix: resolve compliance audit flags — model inheritance, dead deps, font assets (185/185 tests) |
 | `48ec8a2` | fix: resolve 6 audit findings — ownerUid enforcement, Firestore rules rewrite, FAB, smoke test (189/189 tests) |
+| `feb1892` | docs: fix stale PRD phase statuses and clarify ownerUid use case naming in report (189/189 tests, 0 analyze issues) |
+| `1e991e2` | fix: move My Articles fetch to initState, fix Firestore index to ownerUid, update stale docs (189/189 tests, 0 analyze issues) |
+| `0a99ee0` | fix: remove cloud_firestore import from model (AV 1.2.4), add 53 new tests across all layers (242/242 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
