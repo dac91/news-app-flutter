@@ -95,7 +95,19 @@ I decided to approach this like a real product task, not a coding exercise. That
 
 ## 5. Proof of the Project
 
-> **Note**: Screenshots and screen recordings will be added here after the app is run on an Android device/emulator. Firebase backend (Firestore + Storage) is fully deployed and operational.
+### App Screenshots
+
+The following screenshots were captured from the app running on an Android emulator:
+
+| Screen | Screenshot |
+|--------|-----------|
+| Login | ![Login Screen](../screenshots/01_login_screen.png) |
+| Sign Up | ![Sign Up Screen](../screenshots/02_signup_screen.png) |
+| Home Feed | ![Home Feed](../screenshots/03_home_feed.png) |
+| Article Detail | ![Article Detail](../screenshots/04_article_detail.png) |
+| Saved Articles | ![Saved Articles](../screenshots/05_saved_articles.png) |
+| Create Article | ![Create Article](../screenshots/06_create_article.png) |
+| Profile | ![Profile](../screenshots/07_profile.png) |
 
 ### Architecture Overview
 The feature follows clean architecture with 3 layers:
@@ -325,7 +337,8 @@ create_article/
 | `e869eac` | fix: null safety hardening — remove all force-unwrap operators from existing UI |
 | `681071f` | fix: pull-to-refresh, error retry, use case null guards, remove unused intl, emulator docs |
 | `f43b47b` | feat: architecture cleanup, shimmer loading, hero animation, empty state, dark mode |
-| *(latest)* | feat: compliance fixes, daily_news tests, audit update (130/130 tests) |
+| *(latest)* | feat: auth, editing, search, categories, drafts, sharing, pagination, offline, splash, bottom nav (104/104 tests) |
+| `84337c9` | fix: compliance fixes, daily_news tests, audit rewrite (130/130 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
@@ -347,9 +360,9 @@ create_article/
 - **Total tests**: 130 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 50+ (production code, tests, documentation)
-- **Features implemented**: 97 of 101 tracked items (96%)
-- **Architecture violations fixed**: 6 (in existing code) + 6 compliance fixes this session
+- **Features implemented**: 101 of 105 tracked items (96%)
+- **Architecture violations fixed**: 6 (in existing code) + 6 compliance fixes
 - **Null safety fixes**: 5 files with force-unwrap operators replaced with safe alternatives
 - **Security fixes**: 1 (API key moved out of source control)
 - **Documentation pages created**: 8 (`ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`)
-- **Feature tracking**: 97 of 101 items complete (96%), 4 deferred (low priority / out of scope)
+- **Feature tracking**: 101 of 105 items complete (96%), 4 deferred (low priority / out of scope)

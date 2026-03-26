@@ -182,3 +182,106 @@ The following compliance issues were identified and **fixed** (no longer flagged
 
 1. **MEDIUM** — Add screenshots/recordings to `REPORT.md` Section 5
 2. **LOW** — All remaining flags are documented deviations with clear justification
+
+---
+
+## 4. Research-Backed Feature Compliance
+
+The following features were identified in [USER_RESEARCH.md](./USER_RESEARCH.md) as high-value overdelivery opportunities backed by competitive analysis and user research data. This section verifies their implementation status.
+
+### Feature 1: Autosave Drafts
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| **Research Basis** | Assumption #3 — #1 user complaint from Medium UX study: *"without interaction with the article, I am afraid that I may lose the draft."* | [USER_RESEARCH.md §8](./USER_RESEARCH.md) |
+| **Service Layer** | **PASS** | `core/services/draft_service.dart` — `DraftService` class with `saveDraft()`, `loadDraft()`, `clearDraft()`, `hasDraft()` using SharedPreferences. |
+| **DI Registration** | **PASS** | Registered as singleton in `injection_container.dart`. Accessed via `sl<DraftService>()`. |
+| **Periodic Auto-Save** | **PASS** | `Timer.periodic(Duration(seconds: 10))` in `create_article_page.dart` auto-saves form state every 10 seconds. |
+| **Save on Exit** | **PASS** | `dispose()` calls `_saveDraftIfNeeded()` before the screen is destroyed. |
+| **Draft Restoration** | **PASS** | On screen init, `_checkForDraft()` shows a dialog: "Restore Draft?" with Restore/Discard options. Populates all form fields on restore. |
+| **Clear on Publish** | **PASS** | `_draftService.clearDraft()` called on `CreateArticleSuccess` state. |
+| **Manual Save Action** | **PASS** | AppBar has a "Save draft" icon button for explicit save with SnackBar confirmation. |
+| **Edit Mode Excluded** | **PASS** | `_saveDraftIfNeeded()` skips draft saving when `_isEditMode` is true — prevents overwriting drafts with edit data. |
+
+**Verdict: FULLY IMPLEMENTED** — Matches or exceeds the research recommendation (research suggested 5s debounce; implementation uses 10s periodic + save-on-exit + manual save button).
+
+---
+
+### Feature 2: Image Compression
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| **Research Basis** | Assumption #7 — #1 friction point in mobile content creation across all 7 benchmarks. | [USER_RESEARCH.md §8](./USER_RESEARCH.md) |
+| **Client-Side Compression** | **PASS** | `image_picker` called with `maxWidth: 1920`, `maxHeight: 1080`, `imageQuality: 85` in `create_article_page.dart`. |
+| **Server-Side Safety Net** | **PASS** | `storage.rules` enforces `request.resource.size <= 5 * 1024 * 1024` (5 MB max). |
+| **16:9 Crop** | **NOT IMPLEMENTED** | No `image_cropper` package integration. User cannot crop the image to a specific aspect ratio. |
+| **Preview Before Upload** | **PASS** | `ImagePickerWidget` shows a file preview immediately after selection (`_buildFilePreview()`), and a URL preview after upload (`_buildUrlPreview()`). |
+
+**Verdict: PARTIALLY IMPLEMENTED** — Compression via `image_picker` quality/resize parameters works. Server-side 5MB limit enforced. Missing: explicit 16:9 crop step (research recommended `image_cropper` package for consistent feed card aspect ratios).
+
+---
+
+### Feature 3: Preview Before Publish
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| **Research Basis** | Assumption #12 — reduces publishing anxiety. WordPress and Ghost both feature preview as core workflow step. | [USER_RESEARCH.md §8](./USER_RESEARCH.md) |
+| **Dedicated Preview Screen** | **NOT IMPLEMENTED** | No `PreviewArticlePage` or equivalent exists. User cannot see how the article will appear in the feed card or detail view before publishing. |
+| **Image Preview** | **PASS** | `ImagePickerWidget` shows a preview of the selected/uploaded image within the form. |
+| **Form Review** | **NOT IMPLEMENTED** | No step between "fill form" and "tap Publish" that shows the article as readers will see it. |
+
+**Verdict: NOT IMPLEMENTED** — Image preview within the form exists, but the research-recommended "Preview" step (showing the article as it will appear in the feed and detail view, between form completion and Publish tap) was not built.
+
+---
+
+### Feature 4: Dark Mode
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| **Research Basis** | Assumption #4 — 68% of tech-savvy users prefer dark mode. Gen Z associates dark interfaces with premium. OLED screens save 50% power. | [USER_RESEARCH.md §8](./USER_RESEARCH.md) |
+| **Light Theme** | **PASS** | `lightTheme()` in `app_themes.dart` — white scaffold, black accents, formalized from original starter code. |
+| **Dark Theme** | **PASS** | `darkTheme()` in `app_themes.dart` — `#121212` surface color (not pure black, per research), dark gray card color `#1E1E1E`, inverted accent colors. |
+| **Theme Cubit** | **PASS** | `ThemeCubit` in `config/theme/theme_cubit.dart` — manages `ThemeMode` (light/dark/system), persists to SharedPreferences, toggles cyclically. |
+| **MaterialApp Integration** | **PASS** | `main.dart` wraps app in `BlocBuilder<ThemeCubit, ThemeMode>` with `theme: lightTheme()`, `darkTheme: darkTheme()`, `themeMode: themeMode`. |
+| **Persistence** | **PASS** | Theme choice saved via `SharedPreferences` and restored on app startup via `ThemeCubit.init()`. |
+| **Toggle UI** | **PASS** | `ThemeCubit.icon` getter provides the appropriate icon (`light_mode`, `dark_mode`, `brightness_auto`) for the current mode. |
+
+**Verdict: FULLY IMPLEMENTED** — Exceeds the research recommendation. Light/dark/system modes with persistence and a proper dark gray (#121212) base color.
+
+---
+
+### Feature 5: Microinteractions
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| **Research Basis** | Assumption #8 — gamified forms boost engagement by 60%. Microinteractions improved form submissions by 25% in A/B tests. | [USER_RESEARCH.md §8](./USER_RESEARCH.md) |
+| **Hero Animation (Card → Detail)** | **PASS** | `Hero` widget wraps article image in both `article_tile.dart` (tag: `article-image-{id}`) and `article_detail.dart` (matching tag). Smooth shared-element transition. |
+| **Shimmer/Skeleton Loading** | **PASS** | `ArticleShimmerList` in `shared/widgets/article_shimmer_list.dart` using `shimmer` package. Replaces plain `CupertinoActivityIndicator` on home screen. |
+| **Splash Screen** | **PASS** | `SplashScreen` in `shared/widgets/splash_screen.dart` shown on app launch. |
+| **Confetti on Publish** | **NOT IMPLEMENTED** | No `confetti` package. Success dialog uses a green checkmark icon but no particle animation. |
+| **Bookmark Animation** | **NOT IMPLEMENTED** | Save action shows a SnackBar but no icon morphing/bounce animation on the bookmark itself. |
+| **Haptic Feedback** | **NOT IMPLEMENTED** | No `HapticFeedback` calls on save, publish, refresh, or other key actions. |
+| **Error Shake Animation** | **NOT IMPLEMENTED** | Form validation shows inline text errors but no shake animation on invalid fields. |
+| **Pull-to-Refresh** | **PASS** | `RefreshIndicator` on the home screen (`daily_news.dart`) with retry via `RemoteArticlesBloc`. |
+
+**Verdict: PARTIALLY IMPLEMENTED** — Hero transitions, shimmer loading, splash screen, and pull-to-refresh are in place. Missing: confetti on publish, bookmark animation, haptic feedback, error shake. These are the "dopamine hit" microinteractions the research identified as engagement drivers.
+
+---
+
+### Research Feature Summary
+
+| # | Feature | Research Source | Status | Completeness |
+|---|---------|---------------|--------|-------------|
+| 1 | Autosave Drafts | Assumption #3 | **FULLY IMPLEMENTED** | 100% |
+| 2 | Image Compression | Assumption #7 | **PARTIALLY IMPLEMENTED** | 70% — missing 16:9 crop |
+| 3 | Preview Before Publish | Assumption #12 | **NOT IMPLEMENTED** | 20% — only image preview in form |
+| 4 | Dark Mode | Assumption #4 | **FULLY IMPLEMENTED** | 100% |
+| 5 | Microinteractions | Assumption #8 | **PARTIALLY IMPLEMENTED** | 50% — Hero + shimmer + splash + pull-to-refresh done; confetti, haptics, bookmark animation, error shake missing |
+
+**Additional features built beyond the research list:**
+- User Authentication (Firebase Auth with full clean architecture feature)
+- Article Editing (My Articles screen + edit mode)
+- Article Categories (dropdown on create form)
+- Bottom Navigation (replacing push navigation)
+- Splash Screen
+- Error retry with dedicated widget
