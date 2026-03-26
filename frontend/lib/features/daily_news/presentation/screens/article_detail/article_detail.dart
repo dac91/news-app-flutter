@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../../config/theme/design_tokens.dart';
 import '../../../../../core/constants/constants.dart';
 import '../../../../../injection_container.dart';
 import '../../../../../features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
@@ -92,69 +94,88 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
   }
 
   Widget _buildArticleTitleAndDate() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            widget.article?.title ?? '',
-            style: const TextStyle(
-                fontFamily: 'Butler',
-                fontSize: 20,
-                fontWeight: FontWeight.w900),
-          ),
-
-          const SizedBox(height: 14),
-          // DateTime
-          Row(
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Ionicons.time_outline, size: 16),
-              const SizedBox(width: 4),
+              // Title
               Text(
-                widget.article?.publishedAt ?? '',
-                style: const TextStyle(fontSize: 12),
+                widget.article?.title ?? '',
+                style: GoogleFonts.newsreader(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+              // DateTime
+              Row(
+                children: [
+                  Icon(Ionicons.time_outline, size: 16,
+                      color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.article?.publishedAt ?? '',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildArticleImage() {
     final heroTag =
         'article-image-${widget.article?.id ?? widget.article?.title?.hashCode ?? 0}';
-    return Hero(
-      tag: heroTag,
-      child: Container(
-        width: double.maxFinite,
-        height: 250,
-        margin: const EdgeInsets.only(top: 14),
-        child: Image.network(
-          widget.article?.urlToImage ?? kDefaultImage,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: Colors.grey.shade200,
-            child: Icon(
-              Icons.broken_image_outlined,
-              size: 48,
-              color: Colors.grey.shade400,
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Hero(
+          tag: heroTag,
+          child: Container(
+            width: double.maxFinite,
+            height: 250,
+            margin: const EdgeInsets.only(top: 14),
+            child: Image.network(
+              widget.article?.urlToImage ?? kDefaultImage,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: AppColors.surfaceContainerHigh,
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  size: 48,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildArticleDescription() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-      child: Text(
-        '${widget.article?.description ?? ''}\n\n${widget.article?.content ?? ''}',
-        style: const TextStyle(fontSize: 16),
-      ),
+    return Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+          child: Text(
+            '${widget.article?.description ?? ''}\n\n${widget.article?.content ?? ''}',
+            style: theme.textTheme.bodyLarge,
+          ),
+        );
+      },
     );
   }
 
@@ -204,21 +225,15 @@ class _ArticleDetailsViewState extends State<ArticleDetailsView> {
     if (_isBookmarked) {
       bloc.add(RemoveArticle(currentArticle));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Bookmark removed'),
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        const SnackBar(
+          content: Text('Bookmark removed'),
         ),
       );
     } else {
       bloc.add(SaveArticle(currentArticle));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Article bookmarked'),
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        const SnackBar(
+          content: Text('Article bookmarked'),
         ),
       );
     }

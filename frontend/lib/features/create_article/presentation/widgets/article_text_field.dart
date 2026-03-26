@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 ///
 /// Wraps [TextFormField] with consistent styling, validation, and character
 /// counting. Supports single-line and multi-line inputs.
+/// Inherits border/fill/radius from the app's [InputDecorationTheme].
 class ArticleTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -36,32 +37,7 @@ class ArticleTextField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            borderSide: BorderSide(
-              color: Theme.of(context).primaryColor,
-              width: 2,
-            ),
-          ),
-          errorBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-            borderSide: BorderSide(color: Colors.red),
-          ),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
         ),
-        style: const TextStyle(fontSize: 16),
         validator: validator ?? _defaultValidator,
       ),
     );

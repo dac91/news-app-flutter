@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../config/theme/design_tokens.dart';
+
 /// Horizontal scrollable bar of category filter chips.
 ///
 /// Tapping a chip selects it (or deselects if already active).
@@ -28,7 +30,6 @@ class CategoryChipBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
 
     return SizedBox(
       height: 48,
@@ -53,20 +54,20 @@ class CategoryChipBar extends StatelessWidget {
                 onCategorySelected(category);
               }
             },
-            selectedColor: isLight ? Colors.black : Colors.white,
-            backgroundColor:
-                isLight ? Colors.grey.shade200 : Colors.grey.shade800,
+            selectedColor: theme.colorScheme.primary,
+            backgroundColor: AppColors.surfaceContainerHighest,
             labelStyle: TextStyle(
               color: isSelected
-                  ? (isLight ? Colors.white : Colors.black)
-                  : (isLight ? Colors.black87 : Colors.white70),
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurfaceVariant,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               fontSize: 13,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(9999),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            side: BorderSide.none,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           );
         },
       ),

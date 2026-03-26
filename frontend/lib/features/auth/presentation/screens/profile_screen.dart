@@ -35,12 +35,11 @@ class ProfileScreen extends StatelessWidget {
               Center(
                 child: CircleAvatar(
                   radius: 48,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                  backgroundColor: theme.colorScheme.primaryContainer,
                   child: Text(
                     _initials(user.displayName ?? user.email ?? '?'),
                     style: theme.textTheme.headlineMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ),
@@ -50,9 +49,7 @@ class ProfileScreen extends StatelessWidget {
               // Name
               Text(
                 user.displayName ?? 'No name',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
@@ -61,7 +58,7 @@ class ProfileScreen extends StatelessWidget {
               Text(
                 user.email ?? '',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -125,11 +122,12 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+      style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
     );
   }
@@ -204,12 +202,13 @@ class _ThemeTile extends StatelessWidget {
 class _SignOutTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: ListTile(
-        leading: Icon(Icons.logout, color: Colors.red.shade700),
+        leading: Icon(Icons.logout, color: theme.colorScheme.error),
         title: Text(
           'Sign Out',
-          style: TextStyle(color: Colors.red.shade700),
+          style: TextStyle(color: theme.colorScheme.error),
         ),
         onTap: () => _confirmSignOut(context),
       ),
@@ -217,6 +216,7 @@ class _SignOutTile extends StatelessWidget {
   }
 
   void _confirmSignOut(BuildContext context) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -234,7 +234,7 @@ class _SignOutTile extends StatelessWidget {
             },
             child: Text(
               'Sign Out',
-              style: TextStyle(color: Colors.red.shade700),
+              style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
         ],

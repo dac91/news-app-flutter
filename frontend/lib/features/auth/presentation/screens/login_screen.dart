@@ -54,16 +54,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'Welcome Back',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: theme.textTheme.headlineMedium,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Sign in to create and share articles',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -106,11 +104,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 52,
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _onSignIn,
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
                             child: isLoading
                                 ? const SizedBox(
                                     height: 20,
@@ -164,8 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(state.message),
-          backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
         ),
       );
     }

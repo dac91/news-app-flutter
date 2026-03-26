@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../config/theme/design_tokens.dart';
 import '../../../../core/constants/constants.dart';
 import '../../domain/entities/article.dart';
 
@@ -30,8 +32,8 @@ class ArticleWidget extends StatelessWidget {
         child: Row(
           children: [
             _buildImage(context),
-            _buildTitleAndDescription(),
-            _buildRemovableArea(),
+            _buildTitleAndDescription(context),
+            _buildRemovableArea(context),
           ],
         ),
       ),
@@ -39,6 +41,8 @@ class ArticleWidget extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
+    final theme = Theme.of(context);
+    const placeholderColor = AppColors.surfaceContainerHigh;
     final heroTag = 'article-image-${article?.id ?? article?.title?.hashCode ?? 0}';
     return Hero(
       tag: heroTag,
@@ -47,12 +51,12 @@ class ArticleWidget extends StatelessWidget {
         imageBuilder: (context, imageProvider) => Padding(
               padding: const EdgeInsetsDirectional.only(end: 14),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: AppRadius.mdBorder,
                 child: Container(
                   width: MediaQuery.of(context).size.width / 3,
                   height: double.maxFinite,
                   decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.08),
+                      color: placeholderColor,
                       image: DecorationImage(
                           image: imageProvider, fit: BoxFit.cover)),
                 ),
@@ -61,12 +65,12 @@ class ArticleWidget extends StatelessWidget {
         progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
               padding: const EdgeInsetsDirectional.only(end: 14),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: AppRadius.mdBorder,
                 child: Container(
                   width: MediaQuery.of(context).size.width / 3,
                   height: double.maxFinite,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.08),
+                  decoration: const BoxDecoration(
+                    color: placeholderColor,
                   ),
                   child: const CupertinoActivityIndicator(),
                 ),
@@ -75,21 +79,23 @@ class ArticleWidget extends StatelessWidget {
         errorWidget: (context, url, error) => Padding(
               padding: const EdgeInsetsDirectional.only(end: 14),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: AppRadius.mdBorder,
                 child: Container(
                   width: MediaQuery.of(context).size.width / 3,
                   height: double.maxFinite,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.08),
+                  decoration: const BoxDecoration(
+                    color: placeholderColor,
                   ),
-                  child: const Icon(Icons.error),
+                  child: Icon(Icons.error,
+                      color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
             )),
     );
   }
 
-  Widget _buildTitleAndDescription() {
+  Widget _buildTitleAndDescription(BuildContext context) {
+    final theme = Theme.of(context);
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 7),
@@ -98,17 +104,14 @@ class ArticleWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title
-            Builder(
-              builder: (context) => Text(
-                article?.title ?? '',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Butler',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+            Text(
+              article?.title ?? '',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.newsreader(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: theme.colorScheme.onSurface,
               ),
             ),
 
@@ -119,6 +122,9 @@ class ArticleWidget extends StatelessWidget {
                 child: Text(
                   article?.description ?? '',
                   maxLines: 2,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -126,12 +132,13 @@ class ArticleWidget extends StatelessWidget {
             // Datetime
             Row(
               children: [
-                const Icon(Icons.timeline_outlined, size: 16),
+                Icon(Icons.timeline_outlined, size: 16,
+                    color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   article?.publishedAt ?? '',
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -142,17 +149,18 @@ class ArticleWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRemovableArea() {
+  Widget _buildRemovableArea(BuildContext context) {
     if (isRemovable ?? false) {
       return GestureDetector(
         onTap: _onRemove,
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Icon(Icons.remove_circle_outline, color: Colors.red),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Icon(Icons.remove_circle_outline,
+              color: Theme.of(context).colorScheme.error),
         ),
       );
     }
-    return Container();
+    return const SizedBox.shrink();
   }
 
   void _onTap() {

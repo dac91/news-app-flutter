@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 /// A full-width submit button for the article creation form.
 ///
 /// Shows a loading indicator when [isLoading] is true and disables
-/// interaction. Provides clear visual states for enabled, disabled,
-/// and loading.
+/// interaction. Inherits colors and shape from the app's
+/// [ElevatedButtonThemeData].
 class SubmitArticleButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
@@ -25,28 +25,20 @@ class SubmitArticleButton extends StatelessWidget {
       height: 52,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Colors.grey.shade300,
-          disabledForegroundColor: Colors.grey.shade500,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: isLoading ? _buildLoadingContent() : _buildLabelContent(),
+        child: isLoading ? _buildLoadingContent(context) : _buildLabelContent(),
       ),
     );
   }
 
-  Widget _buildLoadingContent() {
-    return const Row(
+  Widget _buildLoadingContent(BuildContext context) {
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CupertinoActivityIndicator(color: Colors.white),
-        SizedBox(width: 12),
-        Text(
+        CupertinoActivityIndicator(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
+        const SizedBox(width: 12),
+        const Text(
           'Publishing...',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),

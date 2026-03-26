@@ -68,6 +68,7 @@ class SavedArticlesState extends State<SavedArticles> {
   Widget _buildBody() {
     return BlocBuilder<LocalArticleBloc, LocalArticlesState>(
       builder: (context, state) {
+        final theme = Theme.of(context);
         if (state is LocalArticlesLoading) {
           return const Center(child: CupertinoActivityIndicator());
         } else if (state is LocalArticlesError) {
@@ -75,12 +76,14 @@ class SavedArticlesState extends State<SavedArticles> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                Icon(Icons.error_outline, size: 48,
+                    color: theme.colorScheme.error),
                 const SizedBox(height: 12),
                 Text(
                   state.error.message ?? 'Failed to load saved articles',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54),
+                  style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 16),
                 TextButton.icon(
@@ -95,7 +98,7 @@ class SavedArticlesState extends State<SavedArticles> {
         } else if (state is LocalArticlesDone) {
           return _buildArticlesList(state.articles!);
         }
-        return Container();
+        return const SizedBox.shrink();
       },
     );
   }

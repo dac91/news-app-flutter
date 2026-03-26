@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../config/theme/design_tokens.dart';
+
 /// Skeleton shimmer placeholder for article list loading state.
 ///
 /// Replaces the plain CupertinoActivityIndicator with a shimmer effect
@@ -26,9 +28,15 @@ class _ArticleShimmerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final baseColor = isDark ? AppColors.surfaceContainerHigh : AppColors.lightSurfaceContainerHigh;
+    final highlightColor = isDark ? AppColors.surfaceContainerHighest : AppColors.lightSurfaceContainerHighest;
+    final shimmerFill = baseColor;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         child: SizedBox(
@@ -37,11 +45,11 @@ class _ArticleShimmerTile extends StatelessWidget {
             children: [
               // Image placeholder
               ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: AppRadius.mdBorder,
                 child: Container(
                   width: MediaQuery.of(context).size.width / 3,
                   height: double.maxFinite,
-                  color: Colors.white,
+                  color: shimmerFill,
                 ),
               ),
               const SizedBox(width: 14),
@@ -57,8 +65,8 @@ class _ArticleShimmerTile extends StatelessWidget {
                         height: 16,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
+                          color: shimmerFill,
+                          borderRadius: AppRadius.xsBorder,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -67,8 +75,8 @@ class _ArticleShimmerTile extends StatelessWidget {
                         height: 16,
                         width: MediaQuery.of(context).size.width * 0.35,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
+                          color: shimmerFill,
+                          borderRadius: AppRadius.xsBorder,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -77,8 +85,8 @@ class _ArticleShimmerTile extends StatelessWidget {
                         height: 12,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
+                          color: shimmerFill,
+                          borderRadius: AppRadius.xsBorder,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -86,8 +94,8 @@ class _ArticleShimmerTile extends StatelessWidget {
                         height: 12,
                         width: MediaQuery.of(context).size.width * 0.25,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
+                          color: shimmerFill,
+                          borderRadius: AppRadius.xsBorder,
                         ),
                       ),
                       const Spacer(),
@@ -98,7 +106,7 @@ class _ArticleShimmerTile extends StatelessWidget {
                             height: 12,
                             width: 12,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: shimmerFill,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -107,8 +115,8 @@ class _ArticleShimmerTile extends StatelessWidget {
                             height: 12,
                             width: 80,
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
+                              color: shimmerFill,
+                              borderRadius: AppRadius.xsBorder,
                             ),
                           ),
                         ],

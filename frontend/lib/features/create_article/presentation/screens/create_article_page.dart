@@ -472,7 +472,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 28),
+            Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 28),
             const SizedBox(width: 8),
             Text(isEdit ? 'Updated!' : 'Published!'),
           ],

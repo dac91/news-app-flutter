@@ -144,18 +144,24 @@ class _DailyNewsState extends State<DailyNews> {
             child: articles.isEmpty
                 ? ListView(
                     // Keep scrollable so pull-to-refresh works on empty state
-                    children: const [
-                      SizedBox(height: 120),
+                    children: [
+                      const SizedBox(height: 120),
                       Center(
                         child: Column(
                           children: [
                             Icon(Icons.article_outlined,
-                                size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
+                                size: 64,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant),
+                            const SizedBox(height: 16),
                             Text(
                               'No articles found',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey),
+                                  fontSize: 16,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant),
                             ),
                           ],
                         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/config/theme/design_tokens.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/domain/entities/ai_insight_entity.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_cubit.dart';
 import 'package:news_app_clean_architecture/features/ai_insight/presentation/cubit/ai_insight_state.dart';
@@ -53,29 +54,15 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
   }
 
   Widget _buildTriggerButton(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: OutlinedButton.icon(
         onPressed: () {
-          // The parent screen triggers getInsight on the cubit
-          // when this button is pressed. We dispatch via context.
           _requestInsight(context);
         },
-        icon: Icon(
-          Icons.auto_awesome_outlined,
-          size: 18,
-          color: theme.colorScheme.primary,
-        ),
-        label: Text(
-          'Get AI Insight',
-          style: TextStyle(color: theme.colorScheme.primary),
-        ),
+        icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+        label: const Text('Get AI Insight'),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
@@ -83,36 +70,36 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
   }
 
   void _requestInsight(BuildContext context) {
-    // Trigger is handled by the onTap callback provided by the parent.
-    // The parent screen (article_detail.dart) provides a callback that
-    // calls cubit.getInsight() with the actual article data.
     widget.onRequestInsight?.call();
   }
 
   Widget _buildLoadingCard(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.mdBorder,
           side: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
+            color: theme.colorScheme.outlineVariant,
           ),
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(20),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 'Analyzing article...',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -122,25 +109,26 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
   }
 
   Widget _buildErrorCard(BuildContext context, AiInsightError state) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Card(
         elevation: 0,
-        color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+        color: theme.colorScheme.errorContainer.withOpacity(0.3),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.mdBorder,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Icon(Icons.error_outline,
-                  color: Theme.of(context).colorScheme.error, size: 20),
+                  color: theme.colorScheme.error, size: 20),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Could not generate insight. Try again later.',
-                  style: TextStyle(fontSize: 13),
+                  style: theme.textTheme.bodySmall,
                 ),
               ),
             ],
@@ -157,7 +145,7 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.mdBorder,
           side: BorderSide(
             color: theme.colorScheme.primary.withOpacity(0.2),
           ),
@@ -197,7 +185,7 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_down,
                       size: 20,
-                      color: Colors.grey,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
@@ -210,11 +198,10 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Key Points',
-                    style: TextStyle(
+                    style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -224,12 +211,13 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('  \u2022  ',
-                              style: TextStyle(fontSize: 13)),
+                          Text('  \u2022  ',
+                              style: theme.textTheme.bodySmall),
                           Expanded(
                             child: Text(
                               bullet,
-                              style: const TextStyle(fontSize: 13, height: 1.4),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                  height: 1.4),
                             ),
                           ),
                         ],
@@ -274,10 +262,10 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Text(
                 'AI-generated summary \u2014 verify independently',
-                style: TextStyle(
+                style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 11,
                   fontStyle: FontStyle.italic,
-                  color: Colors.grey.shade500,
+                  color: theme.colorScheme.outline,
                 ),
               ),
             ),
@@ -293,7 +281,7 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadius.smBorder,
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Text(
@@ -311,19 +299,19 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
   Color _toneColor(String tone) {
     switch (tone.toLowerCase()) {
       case 'neutral':
-        return Colors.blue;
+        return AppColors.toneNeutral;
       case 'critical':
-        return Colors.orange;
+        return AppColors.toneCritical;
       case 'supportive':
-        return Colors.green;
+        return AppColors.toneSupportive;
       case 'alarming':
-        return Colors.red;
+        return AppColors.toneAlarming;
       case 'optimistic':
-        return Colors.teal;
+        return AppColors.toneOptimistic;
       case 'analytical':
-        return Colors.indigo;
+        return AppColors.toneAnalytical;
       default:
-        return Colors.grey;
+        return AppColors.toneNeutral;
     }
   }
 
@@ -333,6 +321,7 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
     required String title,
     required String content,
   }) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Column(
@@ -340,13 +329,13 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: Colors.grey.shade600),
+              Icon(icon, size: 16,
+                  color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
               Text(
                 title,
-                style: const TextStyle(
+                style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
                 ),
               ),
             ],
@@ -356,7 +345,7 @@ class _AiInsightPanelState extends State<AiInsightPanel> {
             padding: const EdgeInsets.only(left: 22),
             child: Text(
               content,
-              style: const TextStyle(fontSize: 13, height: 1.4),
+              style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
             ),
           ),
         ],

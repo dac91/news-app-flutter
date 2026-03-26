@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../config/theme/design_tokens.dart';
 
 /// Animated splash screen shown while the app initializes.
 ///
@@ -51,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -64,33 +67,32 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    gradient: AppGradients.primaryCta,
+                    borderRadius: AppRadius.xlBorder,
                   ),
                   child: const Icon(
                     Icons.article_rounded,
                     size: 48,
-                    color: Colors.black,
+                    color: AppColors.onPrimary,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Daily News',
-                  style: TextStyle(
-                    color: Colors.white,
+                Text(
+                  'Symmetry News',
+                  style: GoogleFonts.newsreader(
+                    color: AppColors.onSurface,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Butler',
-                    letterSpacing: 1.5,
+                    fontStyle: FontStyle.italic,
+                    letterSpacing: 1.0,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your news, your way',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
+                  'Your daily dose of informed reading',
+                  style: GoogleFonts.inter(
+                    color: AppColors.onSurfaceVariant,
                     fontSize: 14,
-                    fontFamily: 'Muli',
                   ),
                 ),
               ],

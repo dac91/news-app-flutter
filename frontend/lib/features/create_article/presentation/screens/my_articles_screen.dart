@@ -4,6 +4,8 @@ import 'package:news_app_clean_architecture/features/create_article/domain/entit
 import 'package:news_app_clean_architecture/features/create_article/presentation/cubit/my_articles_cubit.dart';
 import 'package:news_app_clean_architecture/shared/widgets/empty_state_widget.dart';
 
+import '../../../../config/theme/design_tokens.dart';
+
 /// Screen displaying articles authored by the current user.
 ///
 /// Each article shows title, category, date, and an edit button that
@@ -30,6 +32,7 @@ class MyArticlesScreen extends StatelessWidget {
           }
 
           if (state is MyArticlesError) {
+            final theme = Theme.of(context);
             final isIndexError =
                 state.message.contains('requires an index');
             return Center(
@@ -38,7 +41,8 @@ class MyArticlesScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                    Icon(Icons.error_outline, size: 48,
+                        color: theme.colorScheme.error),
                     const SizedBox(height: 12),
                     Text(
                       isIndexError
@@ -114,7 +118,7 @@ class _MyArticleTile extends StatelessWidget {
             children: [
               // Thumbnail
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.smBorder,
                 child: Image.network(
                   article.thumbnailUrl,
                   width: 60,
@@ -123,8 +127,9 @@ class _MyArticleTile extends StatelessWidget {
                   errorBuilder: (_, __, ___) => Container(
                     width: 60,
                     height: 60,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.image, color: Colors.grey),
+                    color: AppColors.surfaceContainerHigh,
+                    child: Icon(Icons.image,
+                        color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -154,7 +159,7 @@ class _MyArticleTile extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: AppRadius.xsBorder,
                             ),
                             child: Text(
                               article.category!,
@@ -168,7 +173,7 @@ class _MyArticleTile extends StatelessWidget {
                         Text(
                           dateStr,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],

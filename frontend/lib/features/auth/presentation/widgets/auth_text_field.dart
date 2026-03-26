@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// Reusable text field for authentication forms (email, password, name).
 ///
 /// Wraps [TextFormField] with consistent styling and validation support.
+/// Inherits border/fill/radius from the app's [InputDecorationTheme].
 class AuthTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -37,13 +38,6 @@ class AuthTextField extends StatelessWidget {
         labelText: label,
         hintText: hint,
         suffixIcon: suffixIcon,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
       ),
     );
   }

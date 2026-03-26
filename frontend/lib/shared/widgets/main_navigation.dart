@@ -43,9 +43,6 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -54,31 +51,26 @@ class _MainNavigationState extends State<MainNavigation> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: isLight ? Colors.black : Colors.white,
-        unselectedItemColor: isLight ? Colors.grey : Colors.grey.shade600,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 8,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.article_outlined),
             activeIcon: Icon(Icons.article),
-            label: 'Home',
+            label: 'HOME',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bookmark_border),
             activeIcon: Icon(Icons.bookmark),
-            label: 'Saved',
+            label: 'SAVED',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
             activeIcon: Icon(Icons.add_circle),
-            label: 'Create',
+            label: 'CREATE',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'PROFILE',
           ),
         ],
       ),
