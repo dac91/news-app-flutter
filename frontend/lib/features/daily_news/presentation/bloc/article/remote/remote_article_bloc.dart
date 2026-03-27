@@ -56,11 +56,32 @@ class RemoteArticlesBloc
       // Convert community articles to ArticleEntity and merge.
       // Community articles are best-effort: if the fetch fails, we
       // still show NewsAPI articles without error.
-      final communityArticles = communityResult is DataSuccess
-          ? (communityResult.data ?? [])
-              .map(_communityToArticleEntity)
-              .toList()
-          : <ArticleEntity>[];
+      // When a search query or category filter is active, filter
+      // community articles client-side (Firestore doesn't support
+      // full-text search).
+      var communityFirebase = communityResult is DataSuccess
+          ? (communityResult.data ?? <FirebaseArticleEntity>[])
+          : <FirebaseArticleEntity>[];
+
+      if (event.category != null && event.category!.isNotEmpty) {
+        final cat = event.category!.toLowerCase();
+        communityFirebase = communityFirebase
+            .where((a) => a.category?.toLowerCase() == cat)
+            .toList();
+      }
+
+      if (event.query != null && event.query!.isNotEmpty) {
+        final q = event.query!.toLowerCase();
+        communityFirebase = communityFirebase
+            .where((a) =>
+                a.title.toLowerCase().contains(q) ||
+                a.description.toLowerCase().contains(q) ||
+                a.content.toLowerCase().contains(q))
+            .toList();
+      }
+
+      final communityArticles =
+          communityFirebase.map(_communityToArticleEntity).toList();
 
       final merged = _mergeByDate(newsArticles, communityArticles);
 

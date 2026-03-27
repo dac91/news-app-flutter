@@ -147,7 +147,7 @@ Testing wasn't an afterthought — it was part of the workflow from the start:
 - Every commit includes the test count in the commit message (e.g., `242/242 tests, 0 analyze issues`)
 - `flutter analyze` was run on every commit — 0 errors, 0 warnings throughout
 - Real device testing on Android emulator (API 30) for every user-facing change
-- The final suite: **251 unit tests across 38 test files, all passing**
+- The final suite: **253 unit tests across 38 test files, all passing**
 
 ## 3. Challenges Faced
 
@@ -192,7 +192,7 @@ Testing wasn't an afterthought — it was part of the workflow from the start:
 
 ### What This Process Proved
 
-A product manager who understands engineering logic can orchestrate AI to ship production-quality software — 60+ files, 251 tests, clean architecture, Firebase backend, three external API integrations — with the same rigor as a traditional engineering team.
+A product manager who understands engineering logic can orchestrate AI to ship production-quality software — 60+ files, 253 tests, clean architecture, Firebase backend, three external API integrations — with the same rigor as a traditional engineering team.
 
 But this isn't about replacing engineers. It's about a new role emerging: the **AI Product Builder** — someone who combines product thinking (what to build), engineering literacy (how it should be built), and AI orchestration (directing AI to build it). This assignment let me exercise all three.
 
@@ -264,6 +264,12 @@ These images show the actual development process — not just the final product:
 | **OpenCode (CLI)** — Primary development environment. Claude Opus 4.6 making code edits with todo tracking visible on the right panel. | ![OpenCode CLI](../screenshots/10_opencode_cli.png) |
 | **VSCode + Claude Code** — Code review and compliance auditing. Firestore security rules visible alongside the audit scorecard (49 PASS / 7 FLAG / 0 FAIL). | ![VSCode Review](../screenshots/11_vscode_review.png) |
 
+### Demo Video
+
+A screen recording of the full article creation and publish flow on the Android emulator (API 30):
+
+**[`docs/videos/publish_flow_demo.mov`](videos/publish_flow_demo.mov)** — Shows: navigating to Create tab → filling in title, description, content → selecting thumbnail image from gallery → publishing to Firestore → success dialog → article appearing in Home feed alongside NewsAPI articles.
+
 ### App Screenshots
 
 The following screenshots were captured from the app running on an Android emulator:
@@ -317,7 +323,7 @@ create_article/                   ai_insight/
 ```
 
 ### Test Coverage
-251 tests across all layers — all passing:
+253 tests across all layers — all passing:
 - **Auth Domain — Entities/Params**: 8 tests (sign-in params equality: 4, sign-up params equality: 4)
 - **Auth Domain — Use Cases**: 14 tests (entity equality 4, use case success/failure/null-guard 10)
 - **Auth Data — Models**: 5 tests (model conversion, Firebase user mapping, equality)
@@ -333,7 +339,7 @@ create_article/                   ai_insight/
 - **Daily News Domain — Use Cases**: 13 tests (GetArticle: 4, SaveArticle: 3, RemoveArticle: 3, GetSavedArticle: 3)
 - **Daily News Data — Models**: 8 tests (fromJson, fromRawData alias, fromEntity, toEntity, default image)
 - **Daily News Data — Repository**: 10 tests (offline fallback, cache, API success/error/exception, search query, getSavedArticles, save/remove)
-- **Daily News Presentation**: 14 tests (RemoteArticlesBloc: 8 incl. community merge/conversion/resilience, LocalArticleBloc: 6)
+- **Daily News Presentation**: 16 tests (RemoteArticlesBloc: 10 incl. community merge/conversion/resilience/search-filter/category-filter, LocalArticleBloc: 6)
 - **AI Insight Domain**: 19 tests (entity equality/props: 5, params equality/cacheKey: 10, use case success/failure/null-guard: 4)
 - **AI Insight Data**: 24 tests (model fromJson/toJson/fromEntity/toEntity/equality: 14, repository cache-hit/miss/resilience: 10)
 - **AI Insight Presentation**: 12 tests (cubit initial state, success/error/exception flows, param passing, state equality: 12)
@@ -357,7 +363,7 @@ Beyond the assignment requirements, I prioritized features based on the research
 
 *Pain point: Information overload with no way to prioritize. The starter app had a single unfiltered list.*
 
-- **Community Articles in Home Feed**: Firestore community-published articles are fetched in parallel with NewsAPI articles and merged into a single feed sorted by date (newest first). Community fetch is best-effort — if Firestore fails, NewsAPI articles still display without error. Full clean architecture: data source → repository → use case → bloc. Conversion maps `FirebaseArticleEntity` fields to `ArticleEntity` (e.g., `thumbnailUrl` → `urlToImage`, `createdAt` → `publishedAt`).
+- **Community Articles in Home Feed**: Firestore community-published articles are fetched in parallel with NewsAPI articles and merged into a single feed sorted by date (newest first). Community articles are filtered client-side by search query (matching title/description/content) and category — so search and category filters work across both NewsAPI and community content. Community fetch is best-effort — if Firestore fails, NewsAPI articles still display without error. Full clean architecture: data source → repository → use case → bloc. Conversion maps `FirebaseArticleEntity` fields to `ArticleEntity` (e.g., `thumbnailUrl` → `urlToImage`, `createdAt` → `publishedAt`).
 - **Category Filters**: 7-category horizontal scroll bar (general, business, entertainment, health, science, sports, technology) flowing through the full stack to the NewsAPI.
 - **Search**: Debounced 500ms search bar with clear button. Fundamental news discovery mechanism.
 - **Pagination / Infinite Scroll**: Page/pageSize params through entire stack. Triggers at 300px from bottom. Prevents loading 100+ articles at once.
@@ -401,7 +407,7 @@ Beyond the assignment requirements, I prioritized features based on the research
 *Symmetry's own guidelines: Boy Scout Rule, clean architecture, TDD, small functions, meaningful names.*
 
 - **10-Bug Refactor**: Fixed crashes, architecture violations, and deprecated APIs in the starter code before adding features. Documented in `docs/REFACTOR_REPORT.md` with root cause analysis.
-- **251 Tests**: Unit tests across all layers — domain entities, params, use cases, data models, repositories, cubits/blocs, and presentation widgets.
+- **253 Tests**: Unit tests across all layers — domain entities, params, use cases, data models, repositories, cubits/blocs, and presentation widgets.
 - **0 Analyze Issues**: `flutter analyze` clean on every commit (1 info in generated `.g.dart` — not actionable).
 - **Architecture Compliance**: Renamed `pages/` to `screens/` per spec, extracted shared widgets, removed dead dependencies, enforced layer boundaries.
 - **8 Documentation Pages**: `ASSIGNMENT_REQUIREMENTS.md`, `PRD.md`, `FEATURE_TRACKING.md`, `USER_RESEARCH.md`, `REFACTOR_REPORT.md`, `DB_SCHEMA.md`, `EMULATOR_SETUP.md`, `COMPLIANCE_AUDIT.md`.
@@ -475,6 +481,7 @@ All documents are in the repository at [`docs/`](https://github.com/dac91/news-a
 | `20206ed` | docs: align report with REPORT_INSTRUCTIONS guidelines — add learning journey, run instructions, file links (242/242 tests, 0 analyze issues) |
 | `aeae03f` | docs: rewrite report as AI Product Builder — process, tools, pain-point-driven features (242/242 tests, 0 analyze issues) |
 | `57ddd09` | feat: merge community articles into home feed, fix storage auth + publish navigation (251/251 tests, 0 analyze issues) |
+| `3020be9` | fix: filter community articles by search query and category, add demo video (253/253 tests, 0 analyze issues) |
 
 ### Architecture Decisions Record
 
@@ -497,7 +504,7 @@ All documents are in the repository at [`docs/`](https://github.com/dac91/news-a
 | Firestore insight caching | Same article = same insight; avoids redundant API calls; stays within free tier limits |
 
 ### Metrics
-- **Total tests**: 251 (all passing)
+- **Total tests**: 253 (all passing)
 - **Flutter analyze**: 0 errors, 0 warnings (1 info in generated `.g.dart` — not actionable)
 - **New files created**: 60+ (production code, tests, documentation)
 - **Features implemented**: 129 of 133 tracked items (97%)

@@ -287,5 +287,111 @@ void main() {
       );
       expect(converted.publishedAt, equals('2026-03-25T12:00:00.000Z'));
     });
+
+    test('filters community articles by search query', () async {
+      // Arrange — NewsAPI returns 1 article
+      const newsArticles = [
+        ArticleEntity(id: 1, title: 'Bitcoin Surges'),
+      ];
+      when(() => mockUseCase(params: any(named: 'params')))
+          .thenAnswer((_) async => const DataSuccess(newsArticles));
+
+      // Community has 2 articles — only one matches query "flutter"
+      final communityArticles = [
+        const FirebaseArticleEntity(
+          id: 'match',
+          title: 'Flutter Tips',
+          description: 'Tips for Flutter devs',
+          content: 'Content about Flutter',
+          author: 'Author A',
+          thumbnailUrl: 'https://example.com/a.jpg',
+          ownerUid: 'uid-a',
+        ),
+        const FirebaseArticleEntity(
+          id: 'no-match',
+          title: 'Cooking Recipes',
+          description: 'Delicious food',
+          content: 'How to cook pasta',
+          author: 'Author B',
+          thumbnailUrl: 'https://example.com/b.jpg',
+          ownerUid: 'uid-b',
+        ),
+      ];
+      when(() => mockCommunityUseCase())
+          .thenAnswer((_) async => DataSuccess(communityArticles));
+
+      final states = <RemoteArticlesState>[];
+      bloc.stream.listen(states.add);
+
+      // Act — search for "flutter"
+      bloc.add(const GetArticles(query: 'flutter'));
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Assert — 1 news + 1 matching community = 2 total
+      final doneState = states.last as RemoteArticlesDone;
+      expect(doneState.articles, hasLength(2));
+      expect(
+        doneState.articles!.any((a) => a.title == 'Flutter Tips'),
+        isTrue,
+      );
+      expect(
+        doneState.articles!.any((a) => a.title == 'Cooking Recipes'),
+        isFalse,
+      );
+    });
+
+    test('filters community articles by category', () async {
+      // Arrange
+      const newsArticles = [
+        ArticleEntity(id: 1, title: 'Tech News'),
+      ];
+      when(() => mockUseCase(params: any(named: 'params')))
+          .thenAnswer((_) async => const DataSuccess(newsArticles));
+
+      // Community has 2 articles — only one matches category "technology"
+      final communityArticles = [
+        const FirebaseArticleEntity(
+          id: 'tech-article',
+          title: 'AI Advances',
+          description: 'Desc',
+          content: 'Content',
+          author: 'Author',
+          thumbnailUrl: 'https://example.com/t.jpg',
+          ownerUid: 'uid-1',
+          category: 'technology',
+        ),
+        const FirebaseArticleEntity(
+          id: 'sports-article',
+          title: 'Football Update',
+          description: 'Desc',
+          content: 'Content',
+          author: 'Author',
+          thumbnailUrl: 'https://example.com/s.jpg',
+          ownerUid: 'uid-2',
+          category: 'sports',
+        ),
+      ];
+      when(() => mockCommunityUseCase())
+          .thenAnswer((_) async => DataSuccess(communityArticles));
+
+      final states = <RemoteArticlesState>[];
+      bloc.stream.listen(states.add);
+
+      // Act — filter by technology category
+      bloc.add(const GetArticles(category: 'technology'));
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Assert — 1 news + 1 matching community = 2 total
+      final doneState = states.last as RemoteArticlesDone;
+      expect(doneState.articles, hasLength(2));
+      expect(
+        doneState.articles!.any((a) => a.title == 'AI Advances'),
+        isTrue,
+      );
+      expect(
+        doneState.articles!.any((a) => a.title == 'Football Update'),
+        isFalse,
+      );
+    });
   });
 }
